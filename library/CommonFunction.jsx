@@ -274,18 +274,22 @@ function getSceneByName(sceneName){
 }
 //alert(getSceneByName("C01_Color"))
 function getSolidByName(solidName){
+    //  按名称获取，会有重名，所以返回数组，找不到返回空数组。
+    var solids = [];
+    
     var solidsFolder = getRootFolderByName("Solids");
-    if(solidsFolder==null){return null}
+    if(solidsFolder==null){return solids}
     
     var numItems = solidsFolder.numItems;
     for (var i=1; i<=numItems; i++) {
         var item = solidsFolder.item(i);
         // 获取名称需要更多的时间.所以先判断类型
-        if((item instanceof FootageItem) && (item.name==solidName)) { return item;}
+        if((item instanceof FootageItem) && (item.name==solidName)) {solids.push(item);}
     }
-    return null
+
+    return solids;
 }
-//alert(getSolidByName("waterDispCC").name)
+//alert(getSolidByName("waterDispCC")[0].name)
 function getFootageByName(footageName){
     var footageFolder = getRootFolderByName("footage");
     if(footageFolder==null){return null}

@@ -378,9 +378,10 @@ function createVideoComp(sceneComp,mode){
         }
 
         // 添加置换
-        var disCC = getSolidByName("waterDispCC");
-        if(disCC==null){disCC = videoComp.layers.addSolid([1,1,1], "waterDispCC", width, height, pixelAspect, duration);}
-        else{disCC = videoComp.layers.add(disCC,duration);}
+        var disCC;
+        var solids = getSolidByName("waterDispCC");
+        if(solids.lenght==0){disCC = videoComp.layers.addSolid([1,1,1], "waterDispCC", width, height, pixelAspect, duration);}
+        else{disCC = videoComp.layers.add(solids[0],duration);}
         disCC.adjustmentLayer = true;
         var glass = disCC.effect.addProperty("CC Glass");
         glass.property("Softness").setValue(0.1);
@@ -423,13 +424,15 @@ function createFountainComp(sceneComp){
     fountainComp.label = 8;
 
     // 添加黑色BG层
-    var BG = getSolidByName("BG");
-    if(BG==null){BG = fountainComp.layers.addSolid([0,0,0], "BG", width, height, pixelAspect, duration);}
-    else{ Bg = fountainComp.layers.add(BG,duration);}
+    var BG;
+    var solids = getSolidByName("BG");
+    if(solids.length==0){BG = fountainComp.layers.addSolid([0,0,0], "BG", width, height, pixelAspect, duration);}
+    else{ Bg = fountainComp.layers.add(solids[0],duration);}
     // 添加Color效果
-    var fountainColor = getSolidByName("fountainColor");
-    if(fountainColor==null){fountainColor = fountainComp.layers.addSolid([1,1,0], "fountainColor", width, height, pixelAspect, duration);}
-    else{fountainColor = fountainComp.layers.add(fountainColor,duration);}
+    var fountainColor;
+    var solids = getSolidByName("fountainColor");
+    if(solids.length==0){fountainColor = fountainComp.layers.addSolid([1,1,0], "fountainColor", width, height, pixelAspect, duration);}
+    else{fountainColor = fountainComp.layers.add(solids[0],duration);}
     fountainColor.blendingMode = BlendingMode.COLOR;
     var colorEffect = fountainColor.effect.addProperty("4-Color Gradient");
     colorEffect.property("Point 1").setValue([width/2,height/2]);
@@ -564,9 +567,10 @@ function createLaserComp(sceneComp){
     copyInstanceCamera("AllCamComp", result[1], laserComp);
     
     // 添加opLight
-    var opLight = getSolidByName("LaserOPLight");
-    if(opLight==null){opLight = laserComp.layers.addSolid([0,0,0], "LaserOPLight", width, height, pixelAspect, duration);}
-    else{ opLight = laserComp.layers.add(opLight,duration);}
+    var opLight;
+    var solids = getSolidByName("LaserOPLight");
+    if(solids.length==0){opLight = laserComp.layers.addSolid([0,0,0], "LaserOPLight", width, height, pixelAspect, duration);}
+    else{ opLight = laserComp.layers.add(solids[0],duration);}
     var opEffect = opLight.effect.addProperty("Optical Flares");
     opEffect.property("Brightness").setValue(30);
     opEffect.property("Scale Offset").setValue(true);
@@ -624,9 +628,10 @@ function createFireComp(sceneComp){
     //copyInstanceCamera("AllCamComp", result[1], fireComp);
     
     // 添加黑色BG层
-    var BG = getSolidByName("BG");
-    if(BG==null){BG = fireComp.layers.addSolid([0,0,0], "BG", width, height, pixelAspect, duration);}
-    else{ Bg = fireComp.layers.add(BG,duration);}
+    var BG;
+    var solids = getSolidByName("BG");
+    if(solids.length==0){BG = fireComp.layers.addSolid([0,0,0], "BG", width, height, pixelAspect, duration);}
+    else{ Bg = fireComp.layers.add(solids[0],duration);}
 
     return  fireComp;
 }
@@ -1180,34 +1185,40 @@ function getSelectedElementComps(){
     return elementComps;
 }
 //alert(getSelectedElementComps())
+function addBGLayerToComp(dstComp){
+    //  添加黑色背景（BG）层，检查合成中右没有BG层，没有创建，有移动到最后。
+    var bgLayer = dstComp.layer("BG");
+    if(bgLayer==undefined){
+        //  对比主合成大小，如果相等则添加，都不相等就创建新的。
+        var bgItem;
+        var solids = getSolidByName("BG");
+        if(solids.length>0){ 
+            for(var i=0;i<solids.length;i++){
+                var solid = solids[i];
+                if(solid.width==dstComp.width && solid.height==dstComp.height){
+                    bgLayer = dstComp.layers.add(solids[i],dstComp.duration);
+                }
+            }
+        }
+        if(bgLayer==undefined){ bgLayer = dstComp.layers.addSolid([0,0,0], "BG", dstComp.width, dstComp.height, dstComp.pixelAspect, dstComp.duration); }
+    }
+    bgLayer.moveToEnd();
+}
+//addBGLayerToComp(app.project.activeItem)
 function addBGLayer(){
     app.beginUndoGroup("添加黑色背景（BG）层");
     
-    var elementComps = getSelectedComps();
-    if(elementComps.length==0){ 
+    var selComps = getSelectedComps();
+    if(selComps.length==0){ 
         alert("没有选择Comp！")
         return 
     }
-    // 对比主合成大小，如果相等则添加，反之，创建新的。
     
     // 添加黑色背景（BG）层
-    var bgItem, bgLayer,targetComp;
-    
-    
-    var num = elementComps.length;
+    var num = selComps.length;
     for(var i=0; i<num; i++){
-        var elementInfo = elementComps[i];
-        var elementCam = elementInfo.cam;
-        var elementComp = elementInfo.comp;
-        
-        bgItem = getSolidByName("BG");
-        if(bgItem==null){ bgLayer = elementComp.layers.addSolid([0,0,0], "BG", elementComp.width, elementComp.height, elementComp.pixelAspect, elementComp.duration); }
-        else{ 
-            var bgLayer = elementComp.layer("BG");
-            if(bgLayer==undefined){ bgLayer = elementComp.layers.add(bgItem,elementComp.duration);}
-            //$.write("添加BG\n")
-        }
-        bgLayer.moveToEnd();
+        var dstComp = selComps[i];
+        addBGLayerToComp(dstComp);
     }
     app.endUndoGroup();
 }
