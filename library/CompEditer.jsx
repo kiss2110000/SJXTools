@@ -974,7 +974,7 @@ function addFireToComp(){
     }
     app.endUndoGroup();
 }
-addFireToComp()
+//addFireToComp()
 function addLightToComp(){
     // 
     app.beginUndoGroup("添加LightComp");

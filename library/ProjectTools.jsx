@@ -1,4 +1,4 @@
-﻿function openExplorer(){
+﻿function getProjectPath(){
     // 获取项目的根目录
     var projectPath;
     
@@ -18,7 +18,8 @@
         var projectFolder = Folder("P:/temp").selectDlg("选择项目文件夹根目录")
         if (projectFolder == null) return
         var projectPath = projectFolder.absoluteURI;
-
+        projectPath = Folder.decode(projectPath);
+        
         serverProjectFile.open("w");
         serverProjectFile.write(projectPath);
         serverProjectFile.close();
@@ -28,6 +29,13 @@
     serverProjectFile.close();
     
     //alert(projectPath)
+    return projectPath;
+}
+//alert(getProjectPath())
+function openExplorer(){
+    // 获取项目的根目录
+    var projectPath = getProjectPath();
+    var filePath = app.project.file.path;
     
     // 创建下拉列表，包括 preview、fountain、renderoutput、43_Render_Output、21_平面图、22_效果图、12-Final_Music、11_素材，打开文件夹
     var  folderPaths  = {"拍屏":"30_3d/previews",
@@ -47,7 +55,7 @@
         //app.project.file.parent.parent.parent.execute()
         //system.callSystem("explorer " + filePath); 
         var folderPath = projectPath + "/" + folderPath;
-        var folderObj = Folder(folderPath);
+        var folderObj = new Folder(folderPath);
         if(folderObj.exists == false){
             alert("文件夹路径不存在！")
             return 
@@ -196,3 +204,139 @@ function executeJsx(scriptFile){
 }
 //var scriptFile = new File('/c/Users/Administrator/Desktop/camrea.jsx');
 //executeJsx(scriptFile)
+
+
+function moveFile(srcFile, dstFile){
+    // 整理输入参数
+    if(typeof(srcFile)=="string") {srcFile = new File(srcFile);}
+    if(typeof(dstFile)=="string") {dstFile = new File(dstFile);}
+    
+    // 判断文件和路径是否存在
+    if(!srcFile.exists){
+        alert("原始文件不存在！");
+        return false
+    }
+    var folderPath = dstFile.path;
+    var folder = new Folder(folderPath);
+    if(!folder.exists){
+        alert("目标文件夹不存在！");
+        return false
+    }
+    var srcFilePath = File.decode(srcFile.fullName);
+    $.writeln(srcFilePath)
+    var dstFilePath = File.decode(dstFile.fullName);
+    $.writeln(dstFilePath)
+    
+    //  将斜杠替换为反斜杠
+    srcFilePath = srcFilePath.replace(/\//g,"\\")
+    dstFilePath = dstFilePath.replace(/\//g,"\\")
+    // 替换盘符
+    var regex = /^\\([a-zA-Z]{1})\\/g;
+    var srcFileArray = regex.exec(srcFilePath);
+    var regex = /^\\([a-zA-Z]{1})\\/g;
+    var dstFileArray = regex.exec(dstFilePath);
+    //$.writeln(srcFileArray)
+    //$.writeln(dstFileArray)
+    srcFilePath = srcFilePath.replace(/^\\([a-zA-Z]{1})\\/g,srcFileArray[1]+":\\")
+    dstFilePath = dstFilePath.replace(/^\\([a-zA-Z]{1})\\/g,dstFileArray[1]+":\\")
+    
+    // 计算命令
+    var cmd = 'cmd.exe /c move "' + srcFilePath + '" "' + dstFilePath + '"';
+    //cmd = 'cmd.exe /c move \"f:\\AE Project\\test\\aaa 1.txt" "f:\\AE Project\\test\\old\"'
+    //$.writeln(cmd)
+    var s = system.callSystem( cmd)
+    //$.writeln(s)
+    var regex = /移动了         1 个文件/g
+    var sArray = regex.exec(s);
+    //$.writeln(sArray)
+    if(sArray==null){
+        alert(s);
+        return false;
+    }
+    return true;
+}
+
+//var srcFile = "/F/AE Project/test/---NeverBackDown.mp4";
+//var dstFolder = "/F/AE Project/test/old";
+//moveFile(srcFile, dstFolder)
+function moveFileToOldFolder(file){
+    if(typeof(file)=="string") {file = new File(file);}
+    if(!file.exists){return true;}
+    
+    var fileName = File.decode(file.name)
+    var path = File.decode(file.path);
+    $.writeln(fileName)
+    $.writeln(path)
+    
+    var splitName = fileName.split(".");
+    if(splitName.length!=2){
+        alert("名字只能包含一个'.'号");
+        return false
+    }
+    
+    var oldFolderPath = path + "/old";
+    var oldFolder = new Folder(oldFolderPath);
+    if(!oldFolder.exists) {oldFolder.create();}
+    
+    var num = 1
+    var oldFileName = oldFolderPath + "/" + splitName[0] + num + "." + splitName[1];
+    var oldFile = new File(oldFileName)
+    while(oldFile.exists){
+        //alert(num);
+        num ++;
+        oldFileName = oldFolderPath + "/" + splitName[0] + num + "." + splitName[1];
+        oldFile = new File(oldFileName)
+    }
+    $.writeln(oldFileName);
+    
+    var result = moveFile(file,oldFileName);
+    if(!result){return false;}
+    
+    return true;
+}
+//var file = new File(srcFile);
+//moveFileToOldFolder(file)
+function getRenderListFile(){
+    var RQitems = app.project.renderQueue.items;
+
+    if(RQitems.length==0){
+        alert("渲染队列还空着呢！");
+        return null ;
+    }
+
+    var lastRQitem = RQitems[RQitems.length];
+    
+    if(lastRQitem.status != RQItemStatus.DONE){
+        alert("渲染队列最后一个未成功渲染呢！");
+        return null ;
+    }
+    //alert(lastRQitem)
+
+    var om = lastRQitem.outputModules[1]; // 这个数组一般都用1
+    var outFile = om.file;
+
+    if(!outFile.exists){
+        alert("渲染的文件丢失！")
+        return null;
+    }
+    return outFile;
+}
+//getRenderListFile()
+function uploadRenderLastVideoToServer(){
+    var outputFile = getRenderListFile();
+    //$.writeln(outputFile);
+    
+    var fileName = outputFile.name;
+    var projectPath = getProjectPath();
+    var outputPath = "40_comp/43_Render_Output";
+    var newFileFullName = projectPath + "/" + outputPath + "/" + fileName;
+    
+    //$.writeln(newFileFullName);
+    var result = moveFileToOldFolder(newFileFullName);
+    //$.writeln(result);
+    
+    if(!result){return false;}
+    moveFile(outputFile, newFileFullName)
+    
+}
+//uploadRenderLastVideoToServer();
