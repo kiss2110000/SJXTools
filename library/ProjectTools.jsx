@@ -206,6 +206,59 @@ function executeJsx(scriptFile){
 //executeJsx(scriptFile)
 
 
+function copyFile(srcFile, dstFile){
+    // 整理输入参数
+    if(typeof(srcFile)=="string") {srcFile = new File(srcFile);}
+    if(typeof(dstFile)=="string") {dstFile = File(dstFile);} // 没有new关键字，可以返回文件夹类型
+    
+    if(dstFile instanceof Folder){
+        // 判断文件和路径是否存在
+        if(!srcFile.exists){
+            alert("原始文件不存在！");
+            return false
+        }
+        var folderPath = dstFile.path;
+        var folder = new Folder(folderPath);
+        if(!folder.exists){
+            alert("目标文件夹不存在！");
+            return false
+        }
+    
+        //  将脚本路径转换为windows路径
+        var srcFilePath = convertScriptPathToWindowsPath(File.decode(srcFile.fullName))
+        var dstFilePath = convertScriptPathToWindowsPath(File.decode(dstFile.fullName))
+        
+        // 计算命令
+        var cmd = 'cmd.exe /c copy "' + srcFilePath + '" "' + dstFilePath + '"';
+        //cmd = 'cmd.exe /c move \"f:\\AE Project\\test\\aaa 1.txt" "f:\\AE Project\\test\\old\"'
+        $.writeln(cmd)
+        var s = system.callSystem(cmd)
+        //$.writeln(s)
+        var regex = /已复制         1 个文件/g
+        var sArray = regex.exec(s);
+        //$.writeln(sArray)
+        if(sArray==null){
+            alert(s);
+            return false;
+        }
+        return true;
+    }
+}
+var srcFile = "/F/AE Project/test/aaa 1.txt";
+var dstFolder = "/F/AE Project/test/old";
+//copyFile(srcFile, dstFolder)
+function convertScriptPathToWindowsPath(scriptPath){
+    //  将斜杠替换为反斜杠
+    scriptPath = scriptPath.replace(/\//g,"\\")
+    // 替换盘符
+    var regex = /^\\([a-zA-Z]{1})\\/g;
+    var pathArray = regex.exec(scriptPath);
+    //$.writeln(srcFileArray)
+    windowsPath = scriptPath.replace(/^\\([a-zA-Z]{1})\\/g,pathArray[1]+":\\")
+
+    return windowsPath;
+}
+//alert(convertScriptPathToWindowsPath("/F/AE Project/test/aaa 1.txt"))
 function moveFile(srcFile, dstFile){
     // 整理输入参数
     if(typeof(srcFile)=="string") {srcFile = new File(srcFile);}
@@ -222,23 +275,10 @@ function moveFile(srcFile, dstFile){
         alert("目标文件夹不存在！");
         return false
     }
-    var srcFilePath = File.decode(srcFile.fullName);
-    $.writeln(srcFilePath)
-    var dstFilePath = File.decode(dstFile.fullName);
-    $.writeln(dstFilePath)
-    
-    //  将斜杠替换为反斜杠
-    srcFilePath = srcFilePath.replace(/\//g,"\\")
-    dstFilePath = dstFilePath.replace(/\//g,"\\")
-    // 替换盘符
-    var regex = /^\\([a-zA-Z]{1})\\/g;
-    var srcFileArray = regex.exec(srcFilePath);
-    var regex = /^\\([a-zA-Z]{1})\\/g;
-    var dstFileArray = regex.exec(dstFilePath);
-    //$.writeln(srcFileArray)
-    //$.writeln(dstFileArray)
-    srcFilePath = srcFilePath.replace(/^\\([a-zA-Z]{1})\\/g,srcFileArray[1]+":\\")
-    dstFilePath = dstFilePath.replace(/^\\([a-zA-Z]{1})\\/g,dstFileArray[1]+":\\")
+
+    //  将脚本路径转换为windows路径
+    var srcFilePath = convertScriptPathToWindowsPath(File.decode(srcFile.fullName))
+    var dstFilePath = convertScriptPathToWindowsPath(File.decode(dstFile.fullName))
     
     // 计算命令
     var cmd = 'cmd.exe /c move "' + srcFilePath + '" "' + dstFilePath + '"';
@@ -255,7 +295,6 @@ function moveFile(srcFile, dstFile){
     }
     return true;
 }
-
 //var srcFile = "/F/AE Project/test/---NeverBackDown.mp4";
 //var dstFolder = "/F/AE Project/test/old";
 //moveFile(srcFile, dstFolder)
@@ -265,8 +304,8 @@ function moveFileToOldFolder(file){
     
     var fileName = File.decode(file.name)
     var path = File.decode(file.path);
-    $.writeln(fileName)
-    $.writeln(path)
+    //$.writeln(fileName)
+    //$.writeln(path)
     
     var splitName = fileName.split(".");
     if(splitName.length!=2){
@@ -287,7 +326,7 @@ function moveFileToOldFolder(file){
         oldFileName = oldFolderPath + "/" + splitName[0] + num + "." + splitName[1];
         oldFile = new File(oldFileName)
     }
-    $.writeln(oldFileName);
+    //$.writeln(oldFileName);
     
     var result = moveFile(file,oldFileName);
     if(!result){return false;}
@@ -325,18 +364,36 @@ function getRenderListFile(){
 function uploadRenderLastVideoToServer(){
     var outputFile = getRenderListFile();
     //$.writeln(outputFile);
+    if(outputFile == null){return false}
     
+    // 获取上传路径和文件全称
     var fileName = outputFile.name;
     var projectPath = getProjectPath();
     var outputPath = "40_comp/43_Render_Output";
-    var newFileFullName = projectPath + "/" + outputPath + "/" + fileName;
-    
+    var dstFolderPath = projectPath + "/" + outputPath;
+    var newFileFullName = dstFolderPath + "/" + fileName;
     //$.writeln(newFileFullName);
-    var result = moveFileToOldFolder(newFileFullName);
-    //$.writeln(result);
     
-    if(!result){return false;}
-    moveFile(outputFile, newFileFullName)
-    
+    // 检测文件是否存在、大小是否相等重复
+    var newFile = new File(newFileFullName);
+    if(newFile.exists){
+        var newFileSize = newFile.length;
+        var outputFileSize = outputFile.length;
+        //$.write (newFileSize)
+        //$.write (outputFileSize)
+        if(newFileSize == outputFileSize){
+            alert("文件大小相等，可能是一个文件，取消上传！")
+            return false
+        }
+        else{
+            // 移动已经存在的文件到old文件夹中
+            var result = moveFileToOldFolder(newFileFullName);
+            $.writeln(result);
+            if(!result){return false;}
+        }
+    }
+
+    var result = copyFile(outputFile, dstFolderPath);
+    if(result){alert("上传成功！");}
 }
 //uploadRenderLastVideoToServer();
