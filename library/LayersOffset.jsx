@@ -149,3 +149,109 @@ function randomOffsetSelectedFrameByGroup(range){
     app.endUndoGroup();
 }
 //randomOffsetSelectedFrameByGroup(100)
+
+function cubeBezierCurve(a,b,c,d,t){
+    // 三阶贝塞尔曲线的参数方程定义
+    // P(t) = A*(1-t)*(1-t)*(1-t) + B*3*(1-t)*(1-t)*t + C*3*(1-t)*t*t + D*t*t*t,  t=0,1
+    if(0<= t <=1){
+        var p = a*(1-t)*(1-t)*(1-t) + b*3*(1-t)*(1-t)*t + c*3*(1-t)*t*t + d*t*t*t
+        return p
+    }else(alert("Parameter 't' beyond range!"))
+}
+
+//alert(cubeBezierCurve([58,361],[368,373],[351,128],[512,96],0.34))
+function offsetFrameByBezierCurve(){
+    if (parseFloat(app.version) > 11.0){
+        var win = new Window("palette", undefined, undefined, {borderless: false});
+        win.margins = [0,0,0,0];
+        var scriptpath = new File($.fileName);
+        var flash = win.add ("flashplayer", undefined);
+        flash.loadMovie(File (scriptpath.parent.fsName + "/Offset_Frame_By_Bezier_Curve_resources/DeCasteljau_Bezier_Curve.swf"));
+       
+        flash.createAEcomp = function(Ax,Ay,tgAx,tgAy,tgBx,tgBy,Bx,By,val){
+                app.beginUndoGroup("Offset Frame By Bezier Curve");
+                
+                var a=[Ax,Ay], b=[tgAx,tgAy], c=[tgBx,tgBy], d=[Bx,By];
+                
+                var selectLayers = getSelectedLayers(getActiveComp());
+                var fr = getActiveComp().frameRate;
+                
+                var min = getMinST(selectLayers);
+                var max = getMaxST(selectLayers);
+                var dur = max-min;
+                for(i=0,ii=selectLayers.length;i<ii;i++){
+                    var numb =i/(ii-1);
+                    var p = cubeBezierCurve(a,b,c,d,numb)
+                    var time = (a[0]-p[0])/(a[0]-d[0])*dur;
+                    
+                    selectLayers[i].startTime=(min+time)/fr;
+                }
+                app.endUndoGroup();
+            }
+        flash.closeScriptWindow = function(){ win.close(); }
+        win.show();
+    }
+}
+//offsetFrameByBezierCurve()
+
+function selectionLayersBySameSourceFooatge(){
+    app.beginUndoGroup("selectionLayersBySameSourceFooatge");
+    var comp = app.project.activeItem;
+    var layers = comp.selectedLayers;
+    
+    if(layers.length!=1){
+        alert("需要选择一个层！");
+        return
+    }
+    if(!(layers[0] instanceof AVLayer)){
+        alert("需要选择AV层！");
+        return
+    }
+
+    // 获取原始项的ID
+    var source = layers[0].source;
+    var sourceId = source.id;
+
+    for(var i=1;i<=comp.numLayers;i++){
+        var layer = comp.layer(i);
+        // 排除相机灯光等类型
+        if(!(layer instanceof AVLayer)){continue;}
+        
+        // 选择层
+        $.writeln(layer.name)
+        if(layer.source.id == sourceId){ layer.selected = true}
+    }
+    app.endUndoGroup();
+}
+//~ selectionLayersBySameSourceFooatge()
+
+function separatePosition(min,max,axis){
+    app.beginUndoGroup("separatePosition");
+    
+    var comp = app.project.activeItem;
+    var layers = comp.selectedLayers;
+    
+    var num = layers.length;
+    
+    var each_increace = (max-min) / (num-1);
+    
+    for(var i=0; i<layers.length;i++){
+        var layer = layers[i];
+        var pos = layer.transform.position.value;
+        
+        if(axis==0){ // X轴
+            pos[0] = min + i*each_increace;
+        }
+        else if(axis==1){ // Y轴
+            pos[1] = min + i*each_increace;
+        }
+        else if(axis==2){ // Z轴
+            pos[2] = min + i*each_increace;
+        }
+    
+        layer.transform.position.setValue(pos);
+    }
+
+    app.endUndoGroup();
+}
+//~ separatePosition(340,513,2);

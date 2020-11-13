@@ -221,8 +221,10 @@ function selecteKeysByString(stringValue){
 
 function getStringPathOfProperty(prop){
     var codePath="";
+
     
-    while(!(prop instanceof AVLayer) ){
+    while(!(prop instanceof AVLayer || prop instanceof LightLayer) ){
+        //alert(prop)
         var propName = prop.name;
         codePath = '.property("' + propName +'")' + codePath;
         
@@ -321,10 +323,9 @@ function SetAttributeKey(start,end){
     
     app.endUndoGroup();
 }
-//SetAttributeKey(75,-75)
+//SetAttributeKey(20,160)
 
 
-// 选择属性
 // 选择属性
 function getSelectedProps(){
     var props = new Array();
@@ -484,6 +485,17 @@ function selectePropertyIXYC(propName,addSelected){
 }
 //selectePropertyIXYC("Y Rotation",false)
 
+
+// ------------结构 ---------- //
+// props
+//     |_ [ propInfo, propInfo ]
+
+// propInfo
+//     |_prop
+//     |_keyTimes
+//              |_[ keyIndex , keyIndex ]
+
+
 // 偏移关键帧
 function getSelectedPropKeys(layer){
     var props = new Array();
@@ -522,6 +534,8 @@ function getSelectedPropKeys(layer){
     return props;
 }
 function getSelectedPropKeys2(layer){
+
+    
     var props = new Array();
     var prop, propInfo;
     
@@ -877,5 +891,196 @@ function randomMoveSelectedKeys(frame){
 
 
 
+// ------------结构 ---------- //
+// layers
+//     |_ [ layerProps, layerProps ]
 
+//           layerProps
+//                 |_ [ propInfo, propInfo ]
+
+//                      propInfo
+//                          |_prop
+//                          |_keyTimes
+//                                    |_ [ keyIndex , keyIndex ]
+
+
+// ------------结构 ---------- //
+// layerArray：[ layer1,layer2,... ]                                                几个层
+
+// layerPropArray：[ propInfo1, propInfo2,... ]                         一个层有几个属性信息
+
+//         propInfo                                                                             属性信息包含：属性和关键帧索引
+//               |_prop
+//               |_keyTimes：[ keyIndex1 , keyIndex2,... ]
+
+
+//全局变量原始的层信息
+//SOURCE_LAYERS = undefined;
+
+// 偏移关键帧
+function getSelectedPropKeysByIndex(layer){
+    var props = new Array();
+    var prop, propInfo;
+    
+    // Iterate over the specified property group's properties
+    var selProps = layer.selectedProperties;
+    for (var i=0; i<selProps.length; i++)
+    {
+        prop = selProps[i];
+        if (prop.propertyType === PropertyType.PROPERTY)			// Found a property
+        {
+            if (prop.matchName === "ADBE Marker")				// Skip markers; they're processed separately
+                continue;
+            if (!prop.isTimeVarying)							// Skip properties that aren't keyframed
+                continue;
+            
+            propInfo = new Object;
+            propInfo.prop = prop;
+            propInfo.keyIndexs = new Array();
+            
+            for (var j=1; j<=prop.numKeys; j++)
+                if (prop.keySelected(j))
+                    propInfo.keyIndexs[propInfo.keyIndexs.length] = j;
+            
+            // If there were keys to save, add the property and its keys to the props array
+            if (propInfo.keyIndexs.length > 0)
+                props[props.length] = propInfo;
+        }
+        else if (prop.propertyType === PropertyType.INDEXED_GROUP)	// Found an indexed group, so check its nested properties
+            props = props.concat(getSelectedPropKeysByIndex2(prop));
+        else if (prop.propertyType === PropertyType.NAMED_GROUP)	// Found a named group, so check its nested properties
+            props = props.concat(getSelectedPropKeysByIndex2(prop));
+    }
+    
+    return props;
+}
+function getSelectedPropKeysByIndex2(layer){
+    var props = new Array();
+    var prop, propInfo;
+    
+    // Iterate over the specified property group's properties
+    var selProps = layer.selectedProperties;
+    for (var i=0; i<selProps.length; i++)
+    {
+        prop = selProps[i];
+        if (prop.propertyType === PropertyType.PROPERTY)			// Found a property
+        {
+            if (prop.matchName === "ADBE Marker")				// Skip markers; they're processed separately
+                continue;
+            if (!prop.isTimeVarying)							// Skip properties that aren't keyframed
+                continue;
+            
+            propInfo = new Object;
+            propInfo.prop = prop;
+            propInfo.keyIndexs = new Array();
+            var selKeys = prop.selectedKeys;
+            var selKeynum = selKeys.length;
+            
+             // If there were keys to save, add the property and its keys to the props array
+            if (selKeynum > 0){
+                // 添加关键帧时间到信息数组
+                for (var j=0; j<selKeynum; j++){
+                    var keyIndex = selKeys[j];
+                    propInfo.keyIndexs[propInfo.keyIndexs.length] = keyIndex;
+                }
+                // 将信息添加属性列表
+                props[props.length] = propInfo;
+            }
+        }
+    }
+    return props;
+}
+
+
+function copySourceLayersSelectedKeys(){
+    //  获取原始层的关键帧信息
+    app.beginUndoGroup("sourceLayersSlecctedKeys")
+    
+    var comp = app.project.activeItem;
+    var sellayers = comp.selectedLayers;
+    
+    // 储存要移动的属性
+    var layers = new Array();
+    for(var i=0; i< sellayers.length; i++){
+        var layer = sellayers[i];
+        //alert(layer.name)
+        var props = getSelectedPropKeysByIndex2(layer);
+        layers.push(props);
+    }
+    
+    SOURCE_LAYERS = layers;
+    alert(SOURCE_LAYERS.length + "个层复制完成！")
+    app.endUndoGroup();
+}
+//copySourceLayersSelectedKeys()
+
+function pasteSourceKeysToTargetLayers(){
+    //  将复制的关键帧信息，粘贴在其他层上
+    app.beginUndoGroup("sourceLayersSlecctedKeys")
+    
+    //按住shift键，在当前时间粘贴关键帧
+    var currentTime = 0;
+//~     if(ScriptUI.environment.keyboardState.shiftKey){
+//~         currentTime = comp.time;
+//~     }
+    
+    // 获取选择的层
+    var comp = app.project.activeItem;
+    var sellayers = comp.selectedLayers;
+    
+    // 获取全局变量
+    var source_layers = SOURCE_LAYERS;
+
+    // 判断选择粘贴的层数是否和复制的层数相等
+    if(sellayers.length != source_layers.length){
+        alert("复制和粘贴的层数不相等！！！")
+        return
+    }
+    
+    for(var i=0; i< sellayers.length; i++){
+        // 获取原始层 和 目标层
+        var layer = sellayers[i];
+        var src_layer = source_layers[i];
+        
+        // 遍历原始层的属性，一个个的设置目标层
+        for(var o=0; o<src_layer.length;o++){
+            var propsInfo = src_layer[o];
+            var src_prop = propsInfo.prop;
+            //alert(src_prop.name)
+            var keyIndexs = propsInfo.keyIndexs;
+            //alert(keyIndexs)
+            var prop = getLayerProperty(src_prop,layer);
+            //alert(prop.name)
+
+            // 逐个获取原始关键帧的时间和数值
+            var times = new Array();
+            var values = new Array();
+            for(var u=0; u< keyIndexs.length; u++){
+                var id = keyIndexs[u];
+                var time = src_prop.keyTime(id);
+                var value = src_prop.keyValue(id);
+                times.push(time);
+                values.push(value);
+            }
+            
+//~         // 修改时间
+//~         if(currentTime !=0){
+//~             var minTime = times.slice(0).sort()[0];
+//~             
+//~             var temp = new Array();
+//~             for(var o=0; o< times.length; o++){
+//~                 temp.push(times[o]-minTime+currentTime)
+//~             }
+//~             times = temp;
+//~         }
+            
+            // 设置目标属性的关键帧
+            prop.setValuesAtTimes(times, values);
+        }
+    }
+    alert( sellayers.length + "个层粘贴完成！")
+    
+    app.endUndoGroup();
+}
+//pasteSourceKeysToTargetLayers()
 

@@ -1,13 +1,18 @@
-﻿function getProjectPath(){
+﻿var dirPath = File($.fileName).path;
+$.evalFile(dirPath + "/" + "CommonFunction.jsxbin");
+
+/*// 获取项目路径
+function getProjectPath(){
     // 获取项目的根目录
-    var projectPath;
+    var projectPath = null;
     
-    // 检查文件的保存目录
+    //检查文件的保存目录
     var fileObj = app.project.file;
     if(fileObj == null){ 
         alert("文件还未保存！")
-        return 
+        return null
     }
+
     var filePath = app.project.file.path;
 
     // 检查 serverProject.txt  文件否存在
@@ -15,8 +20,9 @@
     var serverProjectFile = new File(serverProjectPath);
     // 不存在，则创建 serverProject.txt  文件，保存服务器的路径,   存在，获取服务器路径
     if (serverProjectFile.exists === false) {
-        var projectFolder = Folder("P:/temp").selectDlg("选择项目文件夹根目录")
-        if (projectFolder == null) return
+        var projectFolder = Folder("//192.168.1.98//share_2020").selectDlg("选择项目文件夹根目录")
+        if (projectFolder == null) return null
+        
         var projectPath = projectFolder.absoluteURI;
         projectPath = Folder.decode(projectPath);
         
@@ -30,17 +36,76 @@
     
     //alert(projectPath)
     return projectPath;
+}*/
+//  获取项目的服务器路径
+function getServerProjectPath(){
+    // 获取文件的保存路径
+    var filePath = app.project.file.path;
+    
+    // 检查 serverProject.txt  文件否存在
+    var localSaveFilePath = filePath + "/serverProject.txt";
+    var localFile = new File(localSaveFilePath);
+     if (localFile.exists === false) {
+         return null
+     }
+
+    // 读取文件内容
+    var projectPath = readFile(localSaveFilePath);
+    return projectPath;
 }
-//alert(getProjectPath())
+// 设置项目的服务器路径
+function setServerProjectPath(){
+    // 获取项目文件夹路径
+    var serverProjectFolder = Folder("//192.168.1.98//share_2020").selectDlg("选择项目文件夹根目录");
+    if (serverProjectFolder == null) return null
+    // 处理路径
+    var projectPath = serverProjectFolder.absoluteURI;
+    projectPath = Folder.decode(projectPath);
+    
+    // 获取文件的保存路径
+    var filePath = app.project.file.path;
+    // 获取 serverProject.txt  文件路径
+    var localSaveFilePath = filePath + "/serverProject.txt";
+    
+    // 保存路径到txt
+    writeFile(projectPath,localSaveFilePath);
+    return localSaveFilePath;
+}
+// 获取项目路径
+function serverProjectPath(){
+    //检查文件的保存目录
+    var fileObj = app.project.file;
+    if(fileObj == null){ 
+        alert("文件还未保存！")
+        return null
+    }
+
+    // 获取项目的根目录
+    var projectPath = getServerProjectPath ();
+    if(projectPath ==null){
+        projectPath = setServerProjectPath();
+    }
+    return projectPath;
+}
+//alert(serverProjectPath())
+
 function openExplorer(){
     // 获取项目的根目录
-    var projectPath = getProjectPath();
+    var projectPath = serverProjectPath();
+    if(projectPath==null) {
+        alert("为找找项目路径！")
+        return null
+    }
+
     var filePath = app.project.file.path;
     
     // 创建下拉列表，包括 preview、fountain、renderoutput、43_Render_Output、21_平面图、22_效果图、12-Final_Music、11_素材，打开文件夹
     var  folderPaths  = {"拍屏":"30_3d/previews",
-                            "喷泉":"30_3d/renderoutput/Fountain",
-                            "场景":"30_3d/renderoutput/Scene",
+//~                             "喷泉":"30_3d/renderoutput/Fountain",
+//~                             "场景":"30_3d/renderoutput/Scene",
+                            "喷泉":"30_3d/renderoutput",
+                            "场景":"30_3d/renderoutput",
+                            "本地场景":"(Footage)",
                             "本地视频输出":"Output",
                             "项目视频输出":"40_comp/43_Render_Output",
                             "平面图":"20_2d/21_平面图",
@@ -54,12 +119,16 @@ function openExplorer(){
     function openFolder(projectPath,folderPath){
         //app.project.file.parent.parent.parent.execute()
         //system.callSystem("explorer " + filePath); 
-        var folderPath = projectPath + "/" + folderPath;
+        var folderPath = projectPath + "//" + folderPath;
         var folderObj = new Folder(folderPath);
+        
+        // 如果文件夹不存在，则创建文件夹
         if(folderObj.exists == false){
-            alert("文件夹路径不存在！")
-            return 
+//~             alert("文件夹路径不存在！\n" + folderPath)
+//~             return 
+            folderObj.create();
         }
+    
         folderObj.execute();
     }
     
@@ -71,6 +140,7 @@ function openExplorer(){
                 previewBtn: Button { text:'拍屏' }, \
                 fountainBtn: Button { text:'喷泉'}, \
                 sceneBtn: Button { text:'场景'}, \
+                localSceneBtn: Button { text:'本地场景'}, \
                 localVideoBtn: Button { text:'本地视频输出'}, \
                 videoBtn: Button { text:'项目视频输出'}, \
                 plantBtn: Button { text:'平面图' }, \
@@ -94,6 +164,10 @@ function openExplorer(){
                                         };
         sceneBtn.onClick = function () {
                                             openFolder(projectPath,folderPaths["场景"]);
+                                            this.window.close(); 
+                                        };
+        localSceneBtn.onClick = function () {
+                                            openFolder(filePath,folderPaths["本地场景"]);
                                             this.window.close(); 
                                         };
         localVideoBtn.onClick = function () {
@@ -183,11 +257,11 @@ function cleanRepeatedItems(){
 function CleanFrameNumber(){
     app.beginUndoGroup("去除帧编号");
     
-    var sequenceSearcher=new RegExp("(.jpg|.jpeg|.png|.exr|.tga)$");
+    var sequenceSearcher=new RegExp("(.jpg|.jpeg|.png|.exr|.tga|.tif)$");
 
     var selItem = app.project.selection;
     for (i = 0;  i <= selItem.length; i++) { 
-        curItem = selItem[i];
+        var curItem = selItem[i];
         if (curItem instanceof FootageItem && sequenceSearcher.test(curItem.name) && curItem.mainSource.displayFrameRate!=0) {
             curItem.replaceWithSequence(curItem.file,  true);
         }
@@ -206,6 +280,25 @@ function executeJsx(scriptFile){
 //executeJsx(scriptFile)
 
 
+// ------------------------------------------ //    复制文件    // ------------------------------------------ //
+
+function convertScriptPathToWindowsPath(scriptPath){
+    //  将斜杠（/）替换为反斜杠（\）
+    scriptPath = scriptPath.replace(/\//g,"\\")
+    
+    // 替换盘符（\F\）=>（F:）,，如果没有盘符则跳过（//192.168.1.98/share/。。。）
+    var regex = /^\\([a-zA-Z])\\/g;
+    var pathArray = regex.exec(scriptPath); //  返回数组：[ "\F\" , "F" ]
+    //alert(pathArray)
+    if(pathArray!=null){
+        windowsPath = scriptPath.replace(pathArray[0],pathArray[1]+":\\")
+        return windowsPath;
+    }
+    return scriptPath;
+}
+//alert(convertScriptPathToWindowsPath("/F/AE Project/test/aaa 1.txt"))
+//alert(convertScriptPathToWindowsPath("//192.168.1.98/share_2020/FA20201017_guang dong fo shan xin gang/40_comp/43_Render_Output/old/---灯光秀1.mp4"))
+// 复制文件到另一个位置
 function copyFile(srcFile, dstFile){
     // 整理输入参数
     if(typeof(srcFile)=="string") {srcFile = new File(srcFile);}
@@ -225,6 +318,9 @@ function copyFile(srcFile, dstFile){
         }
     
         //  将脚本路径转换为windows路径
+//~         alert(File.decode(srcFile.fullName))
+//~         alert(File.decode(dstFile.fullName))
+//~         $.writeln(File.decode(dstFile.fullName))
         var srcFilePath = convertScriptPathToWindowsPath(File.decode(srcFile.fullName))
         var dstFilePath = convertScriptPathToWindowsPath(File.decode(dstFile.fullName))
         
@@ -244,21 +340,9 @@ function copyFile(srcFile, dstFile){
         return true;
     }
 }
-var srcFile = "/F/AE Project/test/aaa 1.txt";
-var dstFolder = "/F/AE Project/test/old";
+//var srcFile = "/F/AE Project/test/aaa 1.txt";
+//var dstFolder = "/F/AE Project/test/old";
 //copyFile(srcFile, dstFolder)
-function convertScriptPathToWindowsPath(scriptPath){
-    //  将斜杠替换为反斜杠
-    scriptPath = scriptPath.replace(/\//g,"\\")
-    // 替换盘符
-    var regex = /^\\([a-zA-Z]{1})\\/g;
-    var pathArray = regex.exec(scriptPath);
-    //$.writeln(srcFileArray)
-    windowsPath = scriptPath.replace(/^\\([a-zA-Z]{1})\\/g,pathArray[1]+":\\")
-
-    return windowsPath;
-}
-//alert(convertScriptPathToWindowsPath("/F/AE Project/test/aaa 1.txt"))
 function moveFile(srcFile, dstFile){
     // 整理输入参数
     if(typeof(srcFile)=="string") {srcFile = new File(srcFile);}
@@ -277,6 +361,7 @@ function moveFile(srcFile, dstFile){
     }
 
     //  将脚本路径转换为windows路径
+
     var srcFilePath = convertScriptPathToWindowsPath(File.decode(srcFile.fullName))
     var dstFilePath = convertScriptPathToWindowsPath(File.decode(dstFile.fullName))
     
@@ -365,8 +450,9 @@ function uploadRenderLastVideoToServer(){
     
     // 获取上传路径和文件全称
     var fileName = outputFile.name;
-    var projectPath = getProjectPath();
+    var projectPath = serverProjectPath();
     var outputPath = "40_comp/43_Render_Output";
+    
     var dstFolderPath = projectPath + "/" + outputPath;
     var newFileFullName = dstFolderPath + "/" + fileName;
     //$.writeln(newFileFullName);
@@ -394,10 +480,11 @@ function uploadRenderLastVideoToServer(){
     if(result){alert("上传成功！");}
 }
 //uploadRenderLastVideoToServer();
+// ------------------------------------------ //    复制文件    // ------------------------------------------ //
 
 
+// ------------------------------------------ //    Houdini    // ------------------------------------------ //
 /*
-
 var info = {
     "time":{
         "start":1,
@@ -410,6 +497,69 @@ var info = {
 }
 */
 
+/*
+Json Template:
+{
+    "CamLayer":[
+        {
+            "name":"C01",
+            "position":[
+                { "time":1, "value":[10,20,30] },
+                { "time":2, "value":[10,20,30] },
+            ],
+            "interest":[
+                { "time":1, "value":[10,20,30] },
+                { "time":2, "value":[10,20,30] },
+            ],
+            "fov":[
+                { "time":1, "value":45 },
+                { "time":2, "value":45 },
+            ],
+        },
+    ],
+    "AVLayer":[
+        {
+            "type":"Solid",                                        // 类型有：Solid、Comp、Footage
+            "name":"Solid 1",
+            "width":1280,
+            "height":720,
+            "position":[
+                { "time":1, "value":[10,20,30] },
+                { "time":2, "value":[10,20,30] },
+            ],
+            "scale":[
+                { "time":1, "value":[100,100,100] },
+                { "time":2, "value":[100,100,100] },
+            ],
+            "rotation":[
+                { "time":1, "value":[0,0,0] },
+                { "time":2, "value":[0,0,0] },
+            ],
+            "mask":[
+                {
+                    "name":"Mask 1",
+                    "color":[0.1,0.2,0.3],
+                    "shape"{
+                        "vertices":[.., .., ..],
+                        "inTangents":[.., .., ..],
+                        "outTangents":[.., .., ..],
+                        "closed":true,
+                    },
+                },
+            ],
+        },
+    ],
+    "LightLayer":[
+        {
+            "name":"Point Light",
+            "position":[
+                { "time":1, "value":[10,20,30] },
+                { "time":2, "value":[10,20,30] },
+            ],
+        },
+    ],
+}
+*/
 var pinyin = (function (){
     var Pinyin = function (ops){
         this.initialize(ops);
@@ -539,7 +689,6 @@ var pinyin = (function (){
 
 
 //alert(pinyin.getFullChars("哈哈"))
-
 function writeStringToDisk(string){
     var file = new File("C:/temp/AEtoH.txt");
     file.open("w");
@@ -593,7 +742,7 @@ function exportToHoudini(){
         }
         if((layer instanceof AVLayer && layer.threeDLayer==true) || layer instanceof LightLayer){
             //alert(layer.name)
-            var layer3d = {"type":"layer3d"}
+            var layer3d = {"type":"layer3d"};
             layer3d.name = pinyin.getFullChars(layer.name);
             var pos = [];
             var rotx = [];
@@ -618,7 +767,7 @@ function exportToHoudini(){
 
     json_data = JSON.stringify(json_obj)
 
-    alert(json_data)
+//~     alert(json_data)
 
     writeStringToDisk(json_data)
 }
@@ -627,40 +776,1474 @@ function exportToHoudini(){
 
 
 function importFromHoudini(){
+    // 读取并解析JSON格式
     var json_data = readStringFromDisk();
-    
     var json_obj = JSON.parse(json_data);
+    
+    // 获取帧范围
     var json_time = json_obj.time;
     var times = []
     for(var i=json_time.start; i<=json_time.end; i++){ times.push(i/25.0);}
     //alert(times)
     
+    // 获取所有的层信息
     var json_layers = json_obj.layers
     //alert(json_layers)
 
+    // 检查当前激活的合成
     var comp = app.project.activeItem;
     var sllayers = comp.selectedLayers;
-
+    //alert(sllayers.length)
+    //alert(json_layers.length)
+    
+    app.beginUndoGroup("importFromHoudini");
+    
     if(sllayers.length>0 && json_layers.length == sllayers.length){
         for(var i=0; i<sllayers.length; i++){
             var layer = sllayers[i];
             var layer3d = json_layers[i];
             var pos,rotx,roty,rotz;
             
+            // 因为houdini 里没有设置预变换的值，所以要将AE的预变换清零。
+            layer.transform.orientation.setValuesAtTimes([0,0,0]);
+            // 设置位置关键帧
             if(layer3d.position != undefined){
-                alert("pos")
+                layer.transform.position.setValuesAtTimes(times,layer3d.position);
             }
+            // 设置X轴旋转关键帧
             if(layer3d.xRotation != undefined){
-                layer.transform.yRotation.setValuesAtTimes(times,layer3d.xRotation);
+                //alert("x")
+                layer.transform.xRotation.setValuesAtTimes(times,layer3d.xRotation);
             }
+            // 设置Y轴旋转关键帧
             if(layer3d.yRotation != undefined){
-                layer.transform.xRotation.setValuesAtTimes(times,layer3d.yRotation);
+                layer.transform.yRotation.setValuesAtTimes(times,layer3d.yRotation);
             }
-            if(layer3d.zRotation != undefined){uuu
-                alert("rotz")
+            // 设置Z轴旋转关键帧
+            if(layer3d.zRotation != undefined){
+                layer.transform.zRotation.setValuesAtTimes(times,layer3d.zRotation);
             }
-            
+            // 设置明暗关键帧
+            if(layer3d.intensity != undefined){
+                //alert("intensity")
+                layer.lightOption.intensity.setValuesAtTimes(times,layer3d.intensity);
+            }
+            // 设置颜色关键帧
+            if(layer3d.color != undefined){
+                layer.lightOption.color.setValuesAtTimes(times,layer3d.color);
+            }
         }
     }
+    else{
+            alert("选择层数和数据数量不相等！")
+    }
+    app.endUndoGroup()
 }
 //importFromHoudini()
+function loadJsonLayers(){
+    app.beginUndoGroup("loadJsonLayers");
+    // 检查获取 AllCamComp 合成
+    var allCamComp = getCompByName("AllCamComp");
+    if(allCamComp==null){
+        alert("AllCamComp is not find!")
+        return
+    }
+    // 检查获取 服务器项目路径
+    var serverPath = serverProjectPath();
+    if(serverPath==null) return false
+    // 检查获取 JSON文件
+    var jsonFilePath = serverPath + "/30_3d/export/AllCamComp.json"
+    if(!File(jsonFilePath).exists){
+        alert("JsonFle is not find!")
+        return
+    }
+    var correctLayers = []
+    
+    var content = readFile(jsonFilePath);
+    var allCameraJson = JSON.parse(content);
+    
+    // 设置Formation
+    var avLayer = allCameraJson["AVLayer"];
+    for(var i=0; i<avLayer.length;i++){
+        var layerJson = avLayer[i];
+        if(layerJson["name"] == "formation"){
+            var width = layerJson["width"]
+            var height = layerJson["height"]
+            
+            // 添加固态层，开启三维层，设置朝向
+            var layer = allCamComp.layer("formation_max");
+            if(layer==null){
+                var layer = allCamComp.layers.addSolid([0,1,0], "formation_max", parseInt(width), parseInt(height), allCamComp.pixelAspect);
+            }
+            layer.threeDLayer = true;
+            layer.transform.orientation.setValue([270,0,0]);
+            
+            // 设置位置、缩放、旋转
+            var position = layerJson["position"];
+            if(position.length==1){
+                layer.transform.position.setValue(position[0]["value"]);
+            }
+            var scale = layerJson["scale"];
+            if(scale.length==1){
+                layer.transform.scale.setValue(scale[0]["value"]);
+            }
+            var rotation = layerJson["rotation"];
+            if(rotation.length==1){
+                layer.transform.xRotation.setValue(rotation[0]["value"][0]);
+                layer.transform.yRotation.setValue(rotation[0]["value"][1]);
+                layer.transform.zRotation.setValue(rotation[0]["value"][2]);
+            }
+
+            // 添加Mask
+            var masks = layerJson["mask"];
+            correctLayers.push(layer.name)
+        }
+    }
+
+    // 设置Camera
+    var cameraLayer = allCameraJson["CameraLayer"];
+    for(var i=0; i<cameraLayer.length;i++){
+        var layerJson = cameraLayer[i];
+        var camLayer = allCamComp.layer(layerJson["name"]);
+        if(camLayer==null){
+            camLayer = allCamComp.layers.addCamera(layerJson["name"], [0,0])
+        }
+        // 设置位置
+        var position = layerJson["position"];
+        var times = position["time"];
+        var values = position["value"];
+        if(times.length==1){
+            camLayer.transform.position.setValue(values[0]);
+        }else{
+            for(var o=0;o<values.length;o++){
+                times[o] = times[o]/allCamComp.frameRate;
+            }
+            camLayer.transform.position.setValuesAtTimes(times,values);
+        }
+        // 设置目标
+        var interest = layerJson["interest"];
+        times = interest["time"];
+        values = interest["value"];
+        if(times.length==1){
+            camLayer.transform.pointOfInterest.setValue(values[0]);
+        }else{
+            for(var o=0;o<values.length;o++){
+                times[o] = times[o]/allCamComp.frameRate;
+            }
+            camLayer.transform.pointOfInterest.setValuesAtTimes(times,values);
+        }
+        // 设置视角
+        var fov = layerJson["fov"];
+        times = fov["time"];
+        values = fov["value"];
+        if(times.length==1){
+            var compWidth = allCamComp.width
+            var shuxue = Math.tan ((values[0]/2)*Math.PI/180)
+            var zoom = (allCamComp.width/2.0 ) / ( Math.tan ((values[0]/2)*Math.PI/180))  // Math.tan(radians)
+            camLayer.cameraOption.zoom.setValue(zoom);
+        }else{
+            for(var o=0;o<values.length;o++){
+                times[o] = times[o]/allCamComp.frameRate;
+            }
+            for(var o=0;o<values.length;o++){
+                values[o] = (allCamComp.width/2.0 ) / ( Math.tan ((values[o]/2)*Math.PI/180))
+            }
+            camLayer.cameraOption.zoom.setValuesAtTimes(times,values);
+        }
+    
+        correctLayers.push(camLayer.name)
+    }
+    // 统计
+    var result = "";
+    for(var i=0; i<correctLayers.length;i++){
+        result += correctLayers[i] + "\n";
+    }
+    if(result.length>0){
+        alert("已导入数据：\n" + result);
+    }
+
+    app.endUndoGroup();
+}
+//loadJsonLayers()
+// ------------------------------------------ //    Houdini    // ------------------------------------------ //
+
+
+// ------------------------------------------ //    导入：代理    // ------------------------------------------ //
+/*
+    Comment 中的代理(proxy)属性：
+        代理类型(proxyType)：预渲染(prerender) 或者 代理(proxy)
+        代理文件(proxyFilePath)：指本地磁盘的文件路径
+        代理文件类型(proxyFileType)：指序列帧(squence) 或者 视频(video)
+        
+        代理文件路径
+            序列帧：../(Footage)/prerender/C01_Comp
+            视频：../(Footage)/prerender/C01_Comp.mp4  或者  ../(Footage)/prerender/C01_Comp.mov
+*/
+//  导入prerender文件夹中，所有未导入的素材
+function importPrerenderFootage(){
+    // 获取项目工程中的文件，获取本地的文件
+    var prerenderPath = app.project.file.path + "/(Footage)/prerender";
+    $.writeln(prerenderPath)
+    var prerenderFolder = new Folder(prerenderPath);
+    
+    if(!prerenderFolder.exists){
+        alert("“prerender“文件夹不存在!")
+        return null
+    }
+    
+    // 获取工程中预渲染中的序列
+    var localFiles = prerenderFolder.getFiles();
+    alert(localFiles.length)
+    
+    // 获取项目面板中的预渲染文件夹
+    var prerenderFolderItem =  getRootFolderByName('prerender');
+    var projectFiles = prerenderFolderItem.items;
+    //alert(projectFiles)
+    
+    // 查找没有导入的素材
+    var projectFilesPaths = new Array();
+    for(var i=1; i<=prerenderFolderItem.numItems; i++){
+        var item = projectFiles[i];
+        $.writeln(item.file)
+        projectFilesPaths.push(item.file)
+    }
+    alert(projectFilesPaths.length)
+    for(var i=0; i<localFiles.length; i++){
+        var filepath = localFiles[i];
+        $.writeln(filepath)
+    }
+    //  导入素材
+    
+}
+//importPrerenderFootage()
+// 一键导入合成预渲染，并设置
+// 获取模板名称信息
+function getOutputModuleTemplateName(outputModuleObject){
+    var template = null;
+    var omtps = outputModuleObject.templates;
+    var omWin = new Window ("dialog"); 
+    var list = omWin.add ("listbox", undefined, omtps);
+    list.onDoubleClick = function(){
+        template = omtps[list.selection.index];
+        omWin.close();
+    }
+    omWin.show();
+    return template;
+}
+//alert(getOutputModuleTemplateName(app.project.renderQueue.items[1].outputModules[1]))
+function setComptoPrerender(){
+    var comp = app.project.activeItem;
+    if(comp==null)
+        return 
+    
+    var layers = comp.selectedLayers;
+    if(layers.length==0)
+        return 
+    
+    var compLayer = layers[0];
+    if((compLayer.source instanceof CompItem) ==false){
+        alert("选择层不是合成，没有预渲染!")
+        return null
+    }
+    
+    app.beginUndoGroup("setComptoPrerender");
+    
+    var compLayerName = compLayer.source.name;
+    
+    // 检查是否已经导入预渲染层
+    for(var i=1; i<=comp.numLayers; i++){
+        var layer = comp.layer(i);
+        if(layer.source.name == compLayerName && layer.comment == "prerender"){
+            if(layer.source instanceof CompItem){
+                layer.comment = "";
+                continue;
+            }
+            else if(layer.source instanceof FootageItem){
+                alert("预渲染层已经存在了!")
+                return null;
+            }
+        }
+    }
+
+    // 检查是否导入了素材
+    //var folder = getRootFolderByName('prerender');
+
+    // 获取预渲染文件的路径
+    var folderPath = app.project.file.path + "/(Footage)/prerender/"+compLayerName;
+    var preFolder = new Folder(folderPath);
+    if(!preFolder.exists){
+        alert(  File.decode (folderPath) + "\n文件夹不存在!")
+        return null
+    }
+    var preFiles = preFolder.getFiles();
+    if(preFiles.length==0)
+    {
+        alert( compLayerName + "：文件夹为空!")
+        return null
+    }
+    var firstFileName = preFiles[0].name;
+    var prerenderFilePath = app.project.file.path + "/(Footage)/prerender/"+compLayerName+"/"+ firstFileName;
+    
+    // 导入预渲染素材
+    var localFile = new File(prerenderFilePath);
+    if(!localFile.exists){
+        alert( File.decode (prerenderFilePath) + "\n文件路径不存在!")
+        return null
+    }
+
+    var prerenderFile = new ImportOptions();
+    prerenderFile.file = localFile;
+    prerenderFile.sequence = true;
+    
+    var prerenderItem = app.project.importFile(prerenderFile);
+    prerenderItem.replaceWithSequence(prerenderItem.file,  true);
+    
+    //将导入的云渲染素材放置到文件夹中
+    var folder = getRootFolderByName('prerender');
+    if(folder==null){
+        folder = app.project.items.addFolder('prerender')
+    }
+    prerenderItem.parentFolder = folder;
+
+    // 添加预渲染层，并设置
+    var newLayer = compLayer.duplicate();
+    newLayer.name = compLayer.name;
+    newLayer.label = 11;
+    newLayer.guideLayer = false;
+    newLayer.replaceSource(prerenderItem, true);
+    newLayer.comment = "prerender";
+    newLayer.enabled = true;
+    
+    // 合成层设置
+    compLayer.enabled = false;
+    compLayer.label = 0;
+    compLayer.guideLayer = true;
+    
+    app.endUndoGroup();
+}
+//setPrerenderComp()
+function deletePrerenderComp(compLayer){
+    // 由于预渲染都是放再合成的上一层， 排除选择第一层
+    if(compLayer.index==1){
+        return false
+    }
+    var prerenderLayer = compLayer.containingComp.layer(compLayer.index-1);
+    //$.writeln(prerenderLayer.name)
+    // 检查该层，如果是预渲染层，设置该层为正常的层
+    if(compLayer instanceof AVLayer && prerenderLayer instanceof AVLayer && prerenderLayer.name==compLayer.name && prerenderLayer.label==11 && prerenderLayer.guideLayer==false && compLayer.label==0 && compLayer.guideLayer==true){
+        // 设置合成层
+        compLayer.label = 9;
+        compLayer.guideLayer = false;
+        compLayer.enabled = true;
+        // 删除预渲染层
+        prerenderLayer.remove();
+        return true
+    }
+    return false
+}
+//deletePrerenderComp(app.project.activeItem.selectedLayers[0])
+function deletePrerenders(){
+    var comp = app.project.activeItem;
+    if(comp==null)
+        return false
+    
+    var layers = comp.selectedLayers;
+    if(layers.length==0)
+        return false
+    
+    var compLayers = [];
+    for(var i=0; i<layers.length;i++){
+        var layer = layers[i];
+        if((layer.source instanceof CompItem)){
+            compLayers.push(layer);
+        }
+    }
+
+    app.beginUndoGroup("setComptoPrerender");
+    
+    for(var i=0; i<compLayers.length;i++){
+        var compLayer = compLayers[i];
+        deletePrerenderComp(compLayer);
+    }
+    
+    app.endUndoGroup();
+}
+//deletePrerenders()
+
+
+/*
+    代理标志：
+        CompItem：
+                代理文件："proxyPath":"/C/Users/Administrator/Desktop.C01_Comp.mp4"
+                代理文件类型："proxyFileType":"Squence"  或者  "proxyFileType":"Video" 
+                
+                代理类型："proxyType":"Proxy"Proxy"   或者  "proxyType":"Prerender"                         //  由prerender 或者 proxy 建立的函数决定
+                
+        CompLayer：
+                的代理颜色："label":15
+*/
+function setProxyRender(){
+// ------------------------------------------------------------------------------------------------------------- //  Function
+
+    function createProxyRender(comp,prerenderPath){
+        // 新建渲染队列，并设置为代理
+        var rq = app.project.renderQueue;
+        var rqitem = rq.items.add(comp);
+        var om = rqitem.outputModules[1];
+        
+        // 获取模板信息
+        if(TEMPLATE==null){
+            TEMPLATE = getOutputModuleTemplateName(om);
+        }
+        // 注意：mp4格式的分辨率大于8190，导入AE会显示错误，所以改为序列
+        om.applyTemplate(TEMPLATE);
+
+        // 设置路径
+        var omName = om.file.name;
+        var outputPath = prerenderPath +"/"+ omName;
+        om.file = File(outputPath);
+        
+//~         // 保存代理文件路径属性
+//~         var proxy = {
+//~             "proxyFile":File.decode(outputPath),
+//~              "proxyType": "video" or "squence",
+//~         }
+//~         setPropertyToComment(comp, proxy)
+
+        
+        // 渲染完成导入代理
+        om.postRenderAction =  PostRenderAction.SET_PROXY;
+        // 打开渲染队列窗口
+        //rq.showWindow(true)
+        //开始渲染
+        //rq.render()
+    }
+
+    function setCompToProxy(comp){
+        // 创建代理的要求：
+        
+        // 代理使用的顺序
+            // 查找commemt属性中指定的代理文件。
+            // 查找本地prerender文件夹中与合成名称相同的视频或者序列文件夹。
+            // 如果，都没有，则，新创建一个代理渲染。
+        
+
+        // ①获取本地的rednder文件夹
+        var prerenderPath = app.project.file.path + "/(Footage)/prerender";
+        //$.writeln(prerenderPath);
+        var prerenderFolder = new Folder(prerenderPath);
+        if (!prerenderFolder.exists){
+            prerenderFolder.create();
+        }
+        
+        // ②检查合成代理：如果已经有代理，（且是代理是关闭状态）打开关闭都重渲染，则重新渲染代理
+        //if (comp.proxySource != null && comp.useProxy == false) {
+        if (comp.proxySource != null) {
+            comp.setProxyToNone();
+            createProxyRender(comp,prerenderPath);
+            return;
+        }
+
+        // ③如果没有代理：检查是否有渲染的代理文件：获取所有文件，首先，找视频文件，如果没有视频，则找序列
+        // 获取代理文件路径属性
+        var comment = comp.comment;
+        if(comment =="") comment = "{}";
+        var property = JSON.parse(comment);
+        var proxyFile = File(property["proxyFile"]);
+        
+        if(proxyFile.exists) {}
+        
+        var prerenderFiles = prerenderFolder.getFiles();
+        var compName = comp.name;
+        var videoFile, squenceFile;
+        for (var i=0;i<prerenderFiles.length;i++) {
+            var file = prerenderFiles[i];
+            var fileName = File.decode(file.name);
+            
+            if(file instanceof File){
+                var fileName = fileName.split(".")[0];
+                if(fileName==compName){
+                    videoFile = file;
+                    break;
+                }
+            }
+            else if(file instanceof Folder){ 
+                if(fileName==compName) squenceFile = file;
+            }
+        }
+
+        // ④设置代理：如果有代理文件，则使用代理。没有代理，则渲染新的代理文件。
+        if(videoFile){
+            // 设置预渲染的代理为视频
+            //alert(File.decode(videoFile))
+            comp.setProxy(videoFile);
+            return 0
+        }
+        else if(squenceFile){
+            // 设置预渲染的代理为序列，并设置帧速率
+            //alert(File.decode(squenceFile))
+            comp.setProxyWithSequence(squenceFile,true);
+            
+            // 设置序列的帧速率
+            var proxy = comp.proxySource; 
+            proxy.conformFrameRate=comp.frameRate;
+            return 1
+        }else{
+            createProxyRender(comp,prerenderPath);
+            return 2
+        }
+    }
+
+
+// ------------------------------------------------------------------------------------------------------------- //  Main
+    // 〇定义全局模板变量
+    TEMPLATE = null;
+	// ①获取合成选择的所有合成
+    var comps = getSelectedComps();
+
+    // 检测是否选择了一个合成层
+    if (comps.length == 0) {
+        alert("请至少选择一个合成!");
+        return null;
+    }
+    var results = [];
+    for(var i=0;i<comps.length;i++){
+        var result = setCompToProxy(comps[i]);
+        results.push(result);
+    }
+
+    // 反馈：
+    var text = "";
+    for(var i=0;i<results.length;i++){
+        if(results[i]==0) {text += comps[i].name + "：设置代理为已存在的视频！\n"}
+        else if(results[i]==0) {text += comps[i].name + "：设置代理为已存在的序列文件！\n"}
+        else{} 
+    }
+    if(text.length>1){ alert(text);}
+
+    app.project.renderQueue.showWindow(true);
+}
+//setProxyRender()
+function addProxyCompRender(compItem,template,outputPath){                          //  当template=null，会弹出选择框
+    // 新建一个渲染队列，并设置渲染完成后替换为代理
+    var rq = app.project.renderQueue;
+    var rqitem = rq.items.add(compItem);
+    var om = rqitem.outputModules[1];
+    
+    // 渲染完成导入代理
+    om.postRenderAction =  PostRenderAction.SET_PROXY;
+    // 检查模板样式，如果为null，则获取新模板
+    if(template==null){
+        template = getOutputModuleTemplateName(om);
+    }
+     if(template==null){ // 取消,或者没有选择模板
+         rqitem.remove()
+         return false;
+     }
+    // 注意：AEcode的mp4格式的分辨率大于8190，导入AE会显示错误，所以改为序列
+    om.applyTemplate(template);
+    
+    // 设置渲染输出路径
+    var fileName = om.file.name;
+    var patt = /\[#+\]/g;                                  // 判断序列帧格式：[#####]
+    //alert(File.decode(om.file))
+    if(patt.test(File.decode(fileName))){
+        var proxyFolder = Folder(outputPath +"/"+compItem.name);
+        if(!proxyFolder.exists){proxyFolder.create()}
+        
+        var proxyFilePath =proxyFolder.path +"/"+ fileName;
+        om.file = File(proxyFilePath);
+        
+        proxyFilePath = proxyFolder;  //  去掉名称，只保存文件夹
+        var proxyFileType = "squence";
+    }
+    else{
+        var proxyFilePath = outputPath +"/"+ fileName;
+        om.file = File(proxyFilePath);
+        var proxyFileType = "video";
+    }
+
+    // 添加代理信息到Comment中
+    var proxyObj = 
+    {
+        "proxyType" : "Proxy",
+        "proxyFilePath" : File.decode(proxyFilePath),
+        "proxyFileType" : proxyFileType,
+    }
+    addCommentProps(compItem,proxyObj,"proxy");
+    
+    return template
+
+}
+//addProxyCompRender(app.project.activeItem,null,'/C/Users/Administrator/Desktop')
+function setProxyComp(compItem){ // 设置代理，查找磁盘可以代理的素材，并设置为代理。
+    // 代理使用的顺序：
+        // 查找commemt属性中指定的代理文件。
+        // 查找本地prerender文件夹中与合成名称相同的视频或者序列文件夹。
+        // 如果，都没有，则，新创建一个代理渲染。
+    
+    var proxyFile = null;
+    var proxyFileType = null;
+    
+    // ①获取Comment 中的代理文件，并且存在
+    var proxyProp = getCommentProps(compItem,"proxy");
+    if(proxyProp != null){
+        var tempFile = File(proxyProp.proxyFilePath);
+        if(tempFile.exists){
+            proxyFile = tempFile;
+            proxyFileType = proxyProp.proxyFileType;
+        }
+    }
+
+    // ②获取prerender文件夹中的代理文件
+    if(proxyFile == null){
+        //获取prerender文件夹
+        var prerenderPath = app.project.file.path + "/(Footage)/prerender";
+        var prerenderFolder = new Folder(prerenderPath);
+        if (!prerenderFolder.exists){
+            prerenderFolder.create();
+        }
+        // 在文件夹中挨个查看文件的名称
+        var compName = compItem.name;
+        var prerenderFiles = prerenderFolder.getFiles();
+        for (var i=0;i<prerenderFiles.length;i++) {
+            var file = prerenderFiles[i];
+            var fileName = File.decode(file.name);
+            
+            if(file instanceof File){
+                var fileName = fileName.split(".")[0];
+                if(fileName==compName){
+                    proxyFile = file;
+                    proxyFileType = "video";
+                    break;
+                }
+            }
+            else if(file instanceof Folder){ 
+                if(fileName==compName){
+                    proxyFile = file;
+                    proxyFileType = "squence";
+                }
+            }
+        }
+    }
+
+    """
+    设置合成项的代理：
+            1、设置合成项的代理
+            2、设置合成项的代理标签
+                    类型
+            3、设置每个使用这个合成项的所有层代理标签
+                    颜色
+    """
+    // 1、设置代理
+    if(proxyFileType == 'video'){                         // 设置预渲染的代理为视频
+        compItem.setProxy(proxyFile);
+    }
+    else if(proxyFileType == 'squence'){            // 设置预渲染的代理为序列，并设置帧速率
+        compItem.setProxyWithSequence(proxyFile,true);
+        
+        // 设置序列的帧速率
+        var proxySrc = compItem.proxySource; 
+        proxySrc.conformFrameRate=compItem.frameRate;
+    }else{
+         return false
+    }
+
+    // 2、设置合成项代理标签到
+    var proxyObj = 
+    {
+        "proxyType" : "Proxy",
+        "proxyFilePath" : File.decode(proxyFile.fullName),
+        "proxyFileType" : proxyFileType,
+    }
+    addCommentProps(compItem,proxyObj,"proxy");
+    
+    // 3、设置层的标签
+    if(proxyFileType !=null){
+
+        var usedLayers = getLayersUsedCompItem(compItem);
+        for(var o=0; o<usedLayers.length; o++){
+            setProxyTagLayer(usedLayers[o]);
+        }
+        return proxyFileType
+    }
+
+    return false;
+}
+function setProxyTagLayer(compLayer){
+    // 记录原始的层颜色，记录代理的方式
+     var srcLabel = compLayer.label;
+     compLayer.label = 11;  // 橙色
+     // 添加代理信息到Comment中
+     addCommentProps(compLayer, {"label":srcLabel},"proxy");
+}
+function delProxyTagLayer(compLayer){
+    var proxy = getCommentProps(compLayer,"proxy");
+    // 代理标签不存在，不是脚本设置的代理，不需要更改标签
+    if(proxy==undefined){ return false }
+    
+    // 设置层为原来的颜色
+    compLayer.label = proxy.label;  
+     // 添加代理信息到Comment中
+    deleteCommentProps(compLayer,"proxy");
+    return true
+}
+function setProxys(){
+    """
+        定义数组，来保存已经设置过代理的合成项
+        
+        获取所有选则的层
+                获取层的合成项，且不在
+                        设置这个项的代理
+                                获取这个项被用于所有合成中的所有层
+                                        针对这些层设置代理标志
+                将这个项添加到项以代理的数组中
+
+    """
+    var projectFile = app.project.file;
+    if(projectFile==null){
+        alert("请先保存文件！")
+        return false
+    }
+    var comp = app.project.activeItem;
+    if(comp==null){ return false}
+    var layers = comp.selectedLayers;
+    if(layers.length==0){return false}
+    
+    // 获取所有选择的合成层
+    var compLayers = [];
+    for(var i=0; i<layers.length;i++){
+        var layer = layers[i];
+        if((layer instanceof AVLayer)&&(layer.source instanceof CompItem)){
+            compLayers.push(layer);
+        }
+    }
+    
+    // ①获取本地的rednder文件夹
+    var prerenderPath = projectFile.path + "/(Footage)/prerender";
+    var prerenderFolder = new Folder(prerenderPath);
+    if (!prerenderFolder.exists){
+        prerenderFolder.create();
+    }
+
+    app.beginUndoGroup("setProxys");
+    
+
+    // 定义组数，收集已经设置代理项数组，避免重复设置
+    var OverSetProxyItemIndices = [];
+    // 定义数组，收集设置过代理后的合成结果
+    var results = [];
+    
+    // 定义渲染模板
+    var template = null;
+    // 循环所有合成层
+    for(var i=0;i<compLayers.length;i++){
+        var compLayer = compLayers[i];
+        var compItem = compLayer.source;
+        
+        // 判断该项是否已经设置代理，是就跳过，不是则添加到数组并设置代理
+        var compItemID = compItem.id;
+        if(arrayIndexOf(OverSetProxyItemIndices,compItemID)>-1){ continue;}
+        OverSetProxyItemIndices.push(compItem);
+        
+        // 设置代理
+         deleteProxyCompItem(compLayer.source);
+        var result = setProxyComp(compLayer.source);
+        if(result==false){ // 设置代理失败，可能没有代理文件
+            template = addProxyCompRender(comps[i],template,prerenderPath);
+            result = "create";
+        }
+//~         else{// 设置代理成功后，设置层标志
+//~             var usedLayers = getLayersUsedCompItem(compItem);
+//~             for(var o=0; o<usedLayers.length; o++){
+//~                 setProxyTagLayer(usedLayers[o]);
+//~             }
+//~         }
+
+        results.push(result);
+    }
+
+//~     // 反馈：
+//~     var text = "";
+//~     for(var i=0;i<results.length;i++){
+//~         var res = results[i];
+//~         if(res=="video") {text += comps[i].name + "：设置代理为已存在的视频！\n"}
+//~         else if(res=="squence") {text += comps[i].name + "：设置代理为已存在的序列文件！\n"}
+//~         else{
+//~         } 
+//~     }
+//~     if(text.length>1){ alert(text);}
+//~     //app.project.renderQueue.showWindow(true);
+    
+    app.endUndoGroup();
+}
+//setProxys()
+function setProxys(){
+    """
+        获取所有层的CompItem，保存到数组
+        
+        设置每个项的代理：
+            1、设置项的代理，并收集结果
+            根据结果设置：
+                一、代理设置成功：
+                    2、设置项的代理标签
+                    3、设置每个使用这个项的所有层代理标签
+                二、将没有代理文件的项，添加渲染
+    """
+    var projectFile = app.project.file;
+    if(projectFile==null){
+        alert("请先保存文件！")
+        return false
+    }
+    var comp = app.project.activeItem;
+    if(comp==null){ return false}
+    var layers = comp.selectedLayers;
+    if(layers.length==0){return false}
+    
+    // 获取所有选择层的合成层
+    var compItems = [];
+    for(var i=0; i<layers.length;i++){
+        var layer = layers[i];
+        if((layer instanceof AVLayer)&&(layer.source instanceof CompItem)){
+            compItems.pushUnique(layer.source);
+        }
+    }
+
+    // ①获取本地的rednder文件夹
+    var prerenderPath = projectFile.path + "/(Footage)/prerender";
+    var prerenderFolder = new Folder(prerenderPath);
+    if (!prerenderFolder.exists){
+        prerenderFolder.create();
+    }
+
+    app.beginUndoGroup("setProxys");
+    
+    // 定义数组，收集设置过代理后的合成结果
+    var results = [];
+    
+    // 定义渲染模板
+    var template = null;
+    // 循环所有合成
+    for(var i=0;i<compItems.length;i++){
+        var compItem = compItems[i];
+        
+        // 设置代理，先清理原来的代理，再设置代理
+        deleteProxyCompItem(compItem);
+        var result = setProxyComp(compItem);  
+        if(result==false){ // 设置代理失败，可能没有代理文件
+            template = addProxyCompRender(compItem,template,prerenderPath);
+            
+            // 添加合成项的代理标签
+            var proxy = getCommentProps(compItem,"proxy");
+            proxy["proxyType"] = "Proxy";                                               // CompItem 上的代理类型：Proxy、Prerender
+            addCommentProps(compItem,proxy,"proxy");
+            
+            // 3、设置层的标签
+            var usedLayers = getLayersUsedCompItem(compItem);
+            for(var o=0; o<usedLayers.length; o++){
+                setProxyTagLayer(usedLayers[o]);
+            }
+
+            result = "create";
+        }
+        results.push(result);
+    }
+
+    // 反馈信息：
+    var text = "";
+    for(var i=0;i<results.length;i++){
+        var res = results[i];
+        if(res=="video") {text += compItems[i].name + "：设置代理为已存在的视频！\n"}
+        else if(res=="squence") {text += compItems[i].name + "：设置代理为已存在的序列文件！\n"}
+        else if(res=="create"){
+            text += compItems[i].name + "：已创建代理渲染，点击渲染！\n";
+            app.project.renderQueue.showWindow(true);
+        }
+    }
+    if(text.length>1){ alert(text , "代理反馈信息");}
+
+    app.endUndoGroup();
+}
+//setProxys()
+function deleteProxyCompItem(compItem){
+    // 检查该合成层，如果是预渲染层，设置为正常的层
+     //if(compItem instanceof CompItem && compItem.useProxy){
+     if(compItem instanceof CompItem){
+         // 1、删除合成的代理
+         compItem.setProxyToNone() 
+         //  2、删除 item 的代理标签
+         deleteCommentProps(compItem,"proxy");
+        //  3、删除层的代理标签
+        var usedLayers = getLayersUsedCompItem(compItem);
+        for(var o=0; o<usedLayers.length; o++){
+            delProxyTagLayer(usedLayers[o]);
+        }
+         return true
+     }
+     return false
+}
+//~ function deleteProxyLayerItem(compLayer){
+//~     // 检查该合成层，如果是预渲染层，设置为正常的层
+//~     var result = deleteProxyCompItem(compLayer.source);
+//~      if(result){
+//~          var proxy = getCommentProps(compLayer,"proxy");
+//~          deleteCommentProps(compLayer,"proxy");
+//~          compLayer.label = proxy.label;  // 设置层为原来的颜色
+//~          compLayer.guideLayer == false; // 确保不是参考层
+//~          return true
+//~      }
+//~      return false
+//~ }
+
+function deleteProxys(){
+    // 删除选择的层的代理， 或者当前激活合成的代理
+    var comp = app.project.activeItem;
+    if(comp==null)
+        return false
+    var layers = comp.selectedLayers;
+    if(layers.length==0){
+        deleteProxyCompItem(comp);
+        return true
+    }
+    // 获取所有选择的合成层
+    var compItems = [];
+    for(var i=0; i<layers.length;i++){
+        var layer = layers[i];
+        if((layer instanceof AVLayer) && (layer.source instanceof CompItem)){
+            compItems.pushUnique(layer.source);
+        }
+    }
+
+    app.beginUndoGroup("deleteProxys");
+    
+    for(var i=0; i<compItems.length;i++){
+        var comp = compItems[i];
+        deleteProxyCompItem(comp);
+    }
+    
+    app.endUndoGroup();
+}
+//deleteProxys()
+function switchProxys(){
+    // 选择的层，或者当前激活的合成
+    var comp = app.project.activeItem;
+    if(comp==null)
+        return false
+    var layers = comp.selectedLayers;
+    if(layers.length==0){
+        //deleteProxyCompItem(comp);
+        return true
+    }
+    // 获取所有选择的合成层
+    var compLayers = [];
+    for(var i=0; i<layers.length;i++){
+        var layer = layers[i];
+        if((layer instanceof AVLayer) && (layer.source instanceof CompItem)){
+            compLayers.push(layer);
+        }
+    }
+
+    app.beginUndoGroup("deleteProxys");
+    
+    for(var i=0; i<compLayers.length;i++){
+        var compLayer = compLayers[i];
+        if(compLayer.source.useProxy){
+            compLayer.source.useProxy = false;
+            delProxyTagLayer(compLayer);
+        }
+        else{
+            compLayer.source.useProxy = true;
+            delProxyTagLayer(compLayer);
+            setProxyTagLayer(compLayer);
+        }
+    }
+    app.endUndoGroup();
+}
+//switchProxys()
+/*
+Ctrl+M渲染时：注意Best Settings：设置默认代理为CurrentSetting           // 意思是现在代理什么设置，渲染时，就是神么样
+
+ 按键点击控制：
+    默认点击：导入代理
+    alt点击：删除代理
+    Ctrl点击：强制重新创建代理渲染
+    Shift点击：切换开闭代理
+*/
+// ------------------------------------------ //    导入：代理    // ------------------------------------------ //
+
+
+// ------------------------------------------ //    分切渲染    // ------------------------------------------ //
+
+// 分切文件集体渲染单帧
+function renderSpecifiedFrameFromComps(){
+    var slItems = app.project.selection;
+    
+    if (slItems.length<=0) return
+    
+    var strframe= prompt("输入要渲染第几帧","","渲染单帧");
+    //alert(currentFrame)
+    if(!strframe) return
+    
+    // 将字符串转换为整型数字
+    var currentFrame = parseInt(strframe);
+    
+    for (var i=0; i< slItems.length; i++)
+    {
+        var comp = slItems[i];
+        if (!(comp instanceof CompItem))
+            continue;
+        
+        // 打开合成视图
+        comp.openInViewer();
+        // 设置当前时间帧
+        comp.time = currentFrame/25;
+        // 渲染单帧命令
+        app.executeCommand(2104);
+    }
+}
+//renderSpecifiedFrameFromComps()
+// 分切文件集体渲染范围设置
+function renderRangeFromComps(){
+    var slItems = app.project.selection
+
+    if (slItems.length<=0) return
+    
+    var strstartframe= prompt("输入开始渲染的帧位置","0","渲染帧范围");
+    //alert(currentFrame)
+    if(!strstartframe) return
+    
+    var strendframe= prompt("输入结束渲染的帧位置","","渲染帧范围");
+    if(!strendframe) return
+    
+    var startFrame = parseInt(strstartframe);
+    var durationFrame = parseInt(strendframe) - startFrame;
+
+    for (var i=0; i< slItems.length; i++)
+    {
+        var comp = slItems[i];
+        if (!(comp instanceof CompItem))
+            continue;
+            
+        //alert( comp.frameRate)
+        
+        var newStart = startFrame / comp.frameRate;
+        var newDuration = durationFrame / comp.frameRate;
+        //alert(newStart)
+        //alert(newDuration)
+        //comp.duration = 900
+        comp.workAreaStart = newStart;
+        comp.workAreaDuration =newDuration;
+        //alert(comp.workAreaStart)
+        //alert(comp.workAreaDuration)
+        
+        
+    }
+    app.executeCommand(2161);
+}
+//renderRangeFromComps()
+function splitRender(){
+    function addCompToRenderQueue(comp,timeStart,duration,ouputFolderPath,prefixName){
+        //将合成添加到渲染面板
+        var rqitem = app.project.renderQueue.items.add(comp);
+        if(rqitem.numOutputModules!=1){
+            rqitem.remove();
+            alert("输出模式不是唯一的，只能设置一个！");
+            return null
+        }
+        var om = rqitem.outputModule(1);
+        //alert(timeStart)
+        //渲染设置：开始时间，持续时间
+        rqitem.timeSpanStart = timeStart;
+        rqitem.timeSpanDuration = duration;
+
+        // 获取设置的输出格式
+        var templateName = app.settings.getSetting("SplitRender","format");
+
+        //渲染设置：输出格式
+        var omtps = om.templates;
+        if((","+omtps.toString()+",").indexOf(","+templateName+",")>-1){
+            om.applyTemplate(templateName)
+        }else{
+            rqitem.remove();
+            alert("没有当前模板:"+templateName)
+        return null
+        }
+        
+        //alert(prefixName)
+        var omName = om.file.name;
+        var outputPath = ouputFolderPath+"/"+prefixName+omName;
+        om.file = File(outputPath);
+
+        return rqitem
+    }
+    //addCompToRenderQueue(app.project.activeItem,50,10," MP4.H264")
+    function getSliceMarkers(comp){
+        var sliceMarkers = comp.markerProperty;
+        var slices = [];
+        for(var i=1;i<=sliceMarkers.numKeys;i++){
+            var marker = sliceMarkers.keyValue(i);
+            //alert(marker.comment)
+            slices.push({"name":marker.comment,
+                               "startTime":sliceMarkers.keyTime(i),
+                               "endTime":sliceMarkers.keyTime(i)+marker.duration,
+                               "format":marker.chapter
+                               });
+        }
+        return slices;
+    }
+    //getSliceMarkers(app.project.activeItem)
+    function addSliceMarkerToComp(comp,name,timeStart){
+        //检查现有的切片标记,添加第一个切片标记
+        var sliceMarkers = comp.markerProperty;
+        if(sliceMarkers.numKeys===0){
+            firstSliceMarker = new MarkerValue("First");
+            firstSliceMarker.duration = comp.duration;
+            comp.markerProperty.setValueAtTime(0,firstSliceMarker);
+            sliceMarkers = comp.markerProperty;
+        }
+
+        //添加非第一个切片标记
+        var preSlice = null;
+        for(var i=1;i<=sliceMarkers.numKeys;i++){
+            var sliceTime = sliceMarkers.keyTime(i);
+            if(sliceTime>timeStart) {
+                preSlice = i-1;
+                break;
+            }
+        }
+
+        if(preSlice===null) preSlice=sliceMarkers.numKeys;
+        // 获取前一个标记的时间和结果
+        var preSliceTime = sliceMarkers.keyTime(preSlice);
+        var preSliceMarker = sliceMarkers.keyValue(preSlice);
+        // 计算前一标记的新时长
+        var oldDuration = preSliceMarker.duration;
+        var newDuration = timeStart - preSliceTime;
+        
+        // 注意：marker的时长标记的范围就是渲染的范围，没有重复渲染首尾帧，并不是 -1帧
+        //preSliceMarker.duration = newDuration - (1/25);
+        preSliceMarker.duration = newDuration;
+        // 计算新标记的时长
+        var duration = oldDuration - newDuration;
+        var sliceMarker = new MarkerValue(name);
+        sliceMarker.duration = duration;
+        // 修改前一标记，并添加新标记
+        comp.markerProperty.setValueAtTime(preSliceTime,preSliceMarker);
+        comp.markerProperty.setValueAtTime(timeStart,sliceMarker);
+        
+        // 返回标记点的索引值
+        return {"index":preSlice+1,"markerValue":sliceMarker}
+    }
+    //addSliceMarkerToVideoComp(app.project.activeItem,"test",500)
+    function delecteSliceMarkerInComp(comp,keyIndex){
+        //alert(keyIndex)
+        var sliceMarkers = comp.markerProperty;
+        //alert(sliceMarkers.numKeys)
+        if(sliceMarkers.numKeys>1 && keyIndex!=1){
+            var duration = sliceMarkers.keyValue(keyIndex).duration;
+            //alert(duration)
+            var preMarkerValue =  sliceMarkers.keyValue(keyIndex-1);
+            var preMarkerTime =  sliceMarkers.keyTime(keyIndex-1);
+            preMarkerValue.duration += duration; 
+            //alert(preMarkerValue.duration)
+            sliceMarkers.setValueAtTime(preMarkerTime,preMarkerValue);
+            
+            sliceMarkers.removeKey(keyIndex);
+        }
+    }
+    //delecteSliceMarkerInComp(app.project.activeItem,3)
+    function showOrHide(widget,OnOrOff){
+        //alert(OnOrOff)
+        if(OnOrOff){
+            widget.visible = true;
+            var bounds = [0,0,250,250];
+            if(widget.type==="listbox")
+                bounds = [0,0,250,20+21*widget.items.length];
+            widget.bounds= bounds;
+            //widget.maximumSize = [9999,9999]
+        }
+        else{
+            widget.visible = false;
+            widget.bounds = [0,0,0,0]
+            //widget.maximumSize = [0,0]
+        }
+    }
+    function addSliceToList(widget,slices){
+        for(var i=0;i<slices.length;i++){
+            var slice = slices[i];
+            with(widget.add("item",i+1<10?"0"+(i+1):i+1)){
+            subItems[0].text=slice.name;
+            subItems[1].text=timeToCurrentFormat(slice.startTime,25);
+            subItems[2].text=timeToCurrentFormat(slice.endTime,25);
+            }
+        }
+    }
+    function addCompsToList(widget,comps){
+        for(var i=0;i<comps.length;i++){
+            var compName = comps[i].name;
+            with(widget.add("item",i+1)){
+            subItems[0].text=compName;
+            }
+        }
+    }
+    function addRQToList(widget,RQS){
+        for(var i=0;i<RQS.length;i++){
+            var rqitem = RQS[i];
+            //alert(rqitem.comp.name)
+            with(widget.add("item",rqitem.comp.name,widget.items.length)){
+            subItems[0].text=rqitem.outputModule(1).name;
+            subItems[1].text=timeToCurrentFormat(rqitem.timeSpanStart,25);
+            subItems[2].text=timeToCurrentFormat(rqitem.timeSpanDuration,25);
+
+            subItems[3].text=File.decode(rqitem.outputModule(1).file);
+            }
+        }
+    }
+
+    //  ------------------------------------------------------------------------------------------------- // UI
+    function splitRender_UI(obj){
+        win=(obj instanceof Panel)? obj : new Window("palette","SplitRender",undefined,{resizeable:true,});
+
+        win.orientation="column";
+        win.alignChildren="left";
+        win.alignment = "left";
+        var TGroup = win.add("group")
+        var buttonGroup = TGroup.add("group");
+        buttonGroup.orientation = "row";
+        var buttonSize = [0,0,20,20];
+        var addbtn = buttonGroup.add("button",buttonSize,"+");
+        var subbtn = buttonGroup.add("button",buttonSize,"-");
+        var fixbtn = buttonGroup.add("button",buttonSize,"⚙");
+        var splitbtn = buttonGroup.add("button",buttonSize,"C");
+        var renderbtn = buttonGroup.add("button",buttonSize,"R");
+        
+        var templateNames = app.settings.getSetting("SplitRender","templates");
+        templateNames  = templateNames .split(",");
+        var ddlGroup = buttonGroup.add("group {alignChildren:'left', orientation:'stack'}");
+        if(File.fs !== "Windows"){
+            var formatddl = ddlGroup.add("dropdownlist",undefined,templateNames);
+            var formattext = ddlGroup.add("edittext");
+        }
+        else{
+            var formattext = ddlGroup.add("edittext");
+            var formatddl = ddlGroup.add("dropdownlist",undefined,templateNames);
+        }
+        formatddl.preferredSize.width = 120;
+        formattext.preferredSize.width = 100;
+        formattext.preferredSize.height = 20;
+        var templateName = app.settings.getSetting("SplitRender","format");
+        formattext.text = templateName;
+
+        //formatddl.selection = 0;
+        
+        var BGroup = win.add("group")
+        BGroup.orientation = "row";
+        BGroup.alignChildren = ["left","top"]; 
+        BGroup.alignment = "left";
+        
+        var LGroup = BGroup.add("group");
+        LGroup.orientation = "column";
+        LGroup.alignChildren = "fill"; 
+        
+        var listGroup = BGroup.add("group");
+        listGroup.orientation="column";
+        var listbox = listGroup.add("listbox",[0,0,0,0],"",{multiselect: true,numberOfColumns:4,showHeaders:true,columnTitles:["#","Name","Time Start","Time End"],columnWidths:[0,5,5,5]});
+        if(SLICEMARKERS.length != 0){
+            SLICEMARKERS = getSliceMarkers(VIDEOSLICECOMP);
+            addSliceToList(listbox,SLICEMARKERS);
+            listbox.bounds=  [0,0,250,20+21*SLICEMARKERS.length];
+        }
+
+        var MGroup = BGroup.add("group");
+        var list2box = MGroup.add("listbox",[0,0,0,0],"",{multiselect: true,numberOfColumns:2,showHeaders:true,columnTitles:["#","Comp Name"],columnWidths:[10,5]});
+        list2box.hide()
+        if(RENDERSPLITCOMPS.length != 0){
+            addCompsToList(list2box,RENDERSPLITCOMPS);
+        }
+        
+        var RGroup = BGroup.add("group");
+        var list3box = RGroup.add("listbox",[0,0,0,0],"",{multiselect: true,numberOfColumns:5,showHeaders:true,columnTitles:["Comp Name","Format","Time Start","Duration","File Path"]});
+        list3box.hide()
+        if(RENDERSPLITCOMPS.length != 0){
+            //addCompsToList(list3box,RENDERSPLITCOMPS);
+        }
+
+        addbtn.onClick = function(){
+            var name = '';
+            var startTime = '';
+            var format = '';
+            
+            var addWin = new Window("dialog","添加");
+            addWin.orientation="row";
+            addWin.alignChildren="top";
+
+            var inputGroup = addWin.add("group");
+            inputGroup.add("statictext",undefined,"名称:");
+            var nameText = inputGroup.add("edittext",[0,0,100,25]);
+            inputGroup.add("statictext",undefined,"开始时间（帧）:");
+            var timeText = inputGroup.add("edittext",[0,0,100,25]);
+    //~         inputGroup.add("statictext",undefined,"格式:");
+    //~         var addFormat = inputGroup.add("edittext",[0,0,100,25]);
+            var check = inputGroup.add ("checkbox", undefined, "Use Current Time of VideoComp");
+
+            var buttonGroup = addWin.add("group");
+            buttonGroup.orientation="column";
+            var okbtn = buttonGroup.add("button",undefined,"OK");
+            buttonGroup.add("button",undefined,"Cancel");
+            
+            check.onClick = function(){
+                if (check.value == true) {
+                    // radio1 selected 
+                    timeText.enabled = false;
+                    timeText.hidden = true;
+                }
+                else{ 
+                    // radio2 selected
+                    timeText.enabled = true;
+                    timeText.hidden = false;
+                }
+            }
+
+            okbtn.onClick = function(){
+                app.beginUndoGroup("add");
+                // 获取输入的数值：名字、时间
+                var slicename = nameText.text;
+
+                
+                var useCurrentTime = check.value;
+                if(useCurrentTime){
+                    var slicetime = VIDEOSLICECOMP.time;
+                }
+                else{
+                    var slicetime = parseInt (timeText.text) ;
+                    // 将秒数转换帧数
+                    slicetime/=25.0;
+                }
+                // 添加标记
+                var newSlice = addSliceMarkerToComp(VIDEOSLICECOMP,slicename,slicetime)
+                
+                listbox.removeAll();
+                SLICEMARKERS = getSliceMarkers(VIDEOSLICECOMP);
+                addSliceToList(listbox,SLICEMARKERS);
+                listbox.bounds=  [0,0,250,20+21*SLICEMARKERS.length];
+                win.layout.layout (true); 
+                win.layout.resize();
+                
+                app.endUndoGroup()
+                addWin.close();
+            }
+            addWin.show();
+            
+        }
+        subbtn.onClick = function(){
+            var selection = listbox.selection;
+            //alert(selection)
+            for(var i=0;i<selection.length;i++){
+                var index = selection[i].index;
+                //alert(index)
+                delecteSliceMarkerInComp(VIDEOSLICECOMP,index+1);
+                
+                listbox.removeAll();
+                SLICEMARKERS = getSliceMarkers(VIDEOSLICECOMP);
+                addSliceToList(listbox,SLICEMARKERS);
+                listbox.bounds=  [0,0,250,20+21*SLICEMARKERS.length];
+                win.layout.layout (true);
+                win.layout.resize();
+            }
+        }
+        fixbtn.onClick = function(){
+            
+        }
+        splitbtn.onClick = function(){
+            showOrHide(list2box,!list2box.visible)
+            win.layout.layout (true); 
+            win.layout.resize();
+        }
+        renderbtn.onClick = function(){
+            //渲染设置：输出路径
+            var projectPath = app.project.file;
+            if(projectPath==null){
+                alert("请先保存文件！")
+                return false
+            }
+            var projectPath = app.project.file.path;
+            
+            var ouputFolderPath = projectPath+"/output/SplitVideo";
+            var folder = Folder(ouputFolderPath);
+            if(!folder.exists) folder.create();
+        
+        
+            // 先获取呀渲染的片段
+            var selectedItems = listbox.selection;
+            
+            var rqitems = [];
+            for(var i=0;i<selectedItems.length;i++){
+                var index = selectedItems[i].index;
+                for(var o=0;o<RENDERSPLITCOMPS.length;o++){
+                    var comp = RENDERSPLITCOMPS[o];
+                    var listItem = listbox.items[index];
+                    //alert(index)
+                    var markers = VIDEOSLICECOMP.markerProperty;
+                    var markerTime = markers.keyTime(index+1);
+                    var markerValue = markers.keyValue(index+1);
+                    //alert(markerTime)
+                    //alert(comp)
+                    //alert(markerValue.duration)
+                    var rqitem = addCompToRenderQueue(comp, markerTime, markerValue.duration, ouputFolderPath,listItem.text);
+                    if(rqitem === null) break;
+                    rqitems.push(rqitem);
+                }
+            }
+            //alert(rqitems)
+            //alert(rqitems[0].outputModule.template)
+            
+            addRQToList(list3box,rqitems)
+            showOrHide(list3box,true)
+            win.layout.layout (true); 
+            win.layout.resize();
+        }
+
+        formattext.onChange = function(){
+            formatddl.add("item",formattext.text);
+            app.settings.saveSetting("SplitRender","format",formattext.text);
+            
+            var templateNames =app.settings.getSetting("SplitRender","templates");
+            templateNames  = templateNames .split(",");
+            //alert(templateNames)
+            templateNames.push(formattext.text)
+            app.settings.saveSetting("SplitRender","templates",templateNames.join())
+        }
+        formatddl.onChange = function(){
+            formattext.text = formatddl.selection.text;
+            app.settings.saveSetting("SplitRender","format",formattext.text)
+        }
+        
+        if (win instanceof Window){
+            win.center();
+            win.show();
+        }
+    }
+
+    //  ------------------------------------------------------------------------------------------------- //
+    // 给系统添加空的格式
+    if(!app.settings.haveSetting("SplitRender","format")){app.settings.saveSetting("SplitRender","format","")}
+    if(!app.settings.haveSetting("SplitRender","templates")){app.settings.saveSetting("SplitRender","templates","")}
+
+    // 定义全局函数
+    RENDERSPLITCOMPS = [];
+    SLICEMARKERS = [];
+    VIDEOSLICECOMP = getCompItemByName("*Video");
+    //var VIDEOSLICECOMP = app.project.activeItem;
+    if(VIDEOSLICECOMP != null && VIDEOSLICECOMP instanceof CompItem){
+        SLICEMARKERS = getSliceMarkers(VIDEOSLICECOMP);
+    }
+    var renderFolder = getFolderItemByName("RenderSplit");
+    if(renderFolder != null){
+        RENDERSPLITCOMPS = getCompItemsFromFolder(renderFolder);
+    }
+    splitRender_UI(this)
+
+}
+//splitRender()
+
+// ------------------------------------------ //    分切渲染    // ------------------------------------------ //

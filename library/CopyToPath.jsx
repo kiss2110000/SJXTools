@@ -14,7 +14,7 @@ $.evalFile(dirPath + "/" + "CommonFunction.jsxbin");
 
 /***** Main Function ****/
 //删除多余的层
-function deleteExcessLayer(comp,preName,num,postName){ 
+function deleteExtraLayers(comp,preName,num,postName){ 
     while (true){ 
         var delName = preName + num + postName;
         //alert(delName)
@@ -51,21 +51,21 @@ function copyToPath(point){
             return 
     }
 
-    // First store the set of selected paths
+    // 首先，找到mask层和素材层，并存储先择的mask
     var selectedPaths = [];
-    var parentLayer;
-    var copyLayer;
+    var maskLayer;
+    var footageLayer;
     for(var i=0; i<2;i++){
         var layer = selectedLayers[i];
         var paths = getSelectedMasks(layer);
         if (paths == null){ 
-            copyLayer = layer;
-            copyLayer.label = 0;
-            copyLayer.enabled = false;
+            footageLayer = layer;
+            footageLayer.label = 0;
+            footageLayer.enabled = false;
         }
         else{
             selectedPaths = paths;
-            parentLayer = layer;
+            maskLayer = layer;
         }//end else
     }//end for
     if (selectedPaths.length==0){
@@ -73,84 +73,98 @@ function copyToPath(point){
             return
     }
     
+    // 表达式关联的阵形层
+    // 方法1：直接通过“formation”名字获取。弊端；只能使用一个固定名字
+    // 方法2：使用层控件，会自动预合成。弊端：复制剪切时，层控件会丢失阵型
+    // 方法3：给comment添加阵型名称，然后再获取名称。
+	// 为素材层添加mask层控件
+	//var control = footageLayer.effect.addProperty("ADBE Layer Control");
+	//control.property("Layer").setValue(maskLayer.index);
+	//control.name = "Formation Layer";
+
+	// 循环复制素材
     for (var i=0; i<selectedPaths.length; i++){
         var path = selectedPaths[i];
         var maskIndex = path.propertyIndex;
         var pathPath = getPropPath(path);
         
+        // 记录前一层和该层的起点
         var preLayer = null;
-        var preStartTime = null;
         if(point){
         // 复制到路径点上
-                var pathPoints = path.maskPath.value.vertices;
-                //alert(pathPoints)
-                for(var o=0; o<pathPoints.length; o++){
-                    var copyName = copyLayer.name +":"+path.name+":["+(o+1)+"]";
-                    if(curComp.layer(copyName) == undefined){
-                        //alert(copyName)
-                        var newCopy = copyLayer.duplicate();
-                        
-                        // 设置层位置和入画时间
-                        if(preLayer!=null){ 
-                            //alert(preLayer.name)
-                            newCopy.moveAfter(preLayer);
-                            newCopy.startTime = preStartTime;
-                        }
-                        preLayer = newCopy;
-                        preStartTime = newCopy.startTime;
-                        
-                        // 设置名称、跟随、位置、3D层、旋转、标记
-                        newCopy.name = copyName;
-                        newCopy.enabled = true;
-                        newCopy.label = (maskIndex-1) % 16 +1;
-                        //newCopy.position.setValue(pathPoints[i]);
-                        newCopy.position.expression =
-                                                    "var srcLayer = thisComp.layer(\"" + parentLayer.name + "\"); \r" +
-                                                    "var srcPath = srcLayer.mask(\"" + path.name + "\").maskPath.points()[" + o + "]; \r" +
-                                                    "srcLayer.toWorld(srcPath);";
-                        if(copyLayer instanceof AVLayer && copyLayer.name!="LightProxy"){
-                            var flow = newCopy .effect.addProperty("Checkbox Control");
-                            flow.name = "Flow"
-                            
-                            newCopy.threeDLayer=true;
-                            
-                            newCopy.orientation.expression =
-                                                    "if(!effect(\"Flow\")(\"Checkbox\").value){\r" +
-                                                    "   var cam = thisComp.activeCamera;\r" + 
-                                                    "   if(cam.hasParent){ var aim = cam.position + cam.parent.position}else{ var aim =  cam.position;}\r" + 
-                                                    "   lookAt([aim[0],position[1],aim[2]],position);\r" +
-                                                    "}else{[90,0,0]};";
-                           /*newCopy.transform.zRotation.expression =
-                                "if(effect(\"Flow\")(\"Checkbox\").value){\r" +
-                                "   var srcLayer = thisComp.layer(\"" + selectedLayer.name + "\"); \r" +
-                                "   var pathToTrace = thisComp.layer(\"" + selectedLayer.name + "\")" + pathPath + "; \r" +
-                                "   var pathTan = pathToTrace.outTangents()[" + i + "]; \r" +
-                                "   radiansToDegrees(Math.atan2(pathTan[1],pathTan[0]));\r" +  
-                                "}else{0};"; */
-                           newCopy.blendingMode = BlendingMode.SCREEN;
-                        }//end else
-                    }//end if
-                    else{ 
-                        preLayer = curComp.layer(copyName);
-                        preStartTime = curComp.layer(copyName).startTime;
+            var pathPoints = path.maskPath.value.vertices;
+            //alert(pathPoints)
+            for(var o=0; o<pathPoints.length; o++){
+                var copyName = footageLayer.name +":"+path.name+":["+(o+1)+"]";
+                
+                //注意：新版本更名为：阵型层名+路径名+编号
+                if(curComp.layer(copyName) == undefined){
+                    copyName = maskLayer.name +":"+path.name+":["+(o+1)+"]";
+                }else{
+                    var tempName = maskLayer.name +":"+path.name+":["+(o+1)+"]";
+                    curComp.layer(copyName).name = tempName;
+                    copyName = tempName;
+                }
+            	
+            	// 如果该层不存在，则创建新层，如果，存在记录层索引和起点时间
+                if(curComp.layer(copyName) == undefined){
+                    //alert(copyName)
+                    var newCopy = footageLayer.duplicate();
+                    
+                    // 设置新层到前一层下面位置和对齐前一层的入画时间
+                    if(preLayer!=null){ 
+                        newCopy.moveAfter(preLayer);
+                        newCopy.startTime = preLayer.startTime;
                     }
-               }// end for
-                //当mask的点变少时，删除多余的层
-                deleteExcessLayer(curComp, copyLayer.name +":"+path.name+":[", pathPoints.length+1, "]")
+                    // 将新层设置为前一层
+                    preLayer = newCopy;
+                    
+                    // 设置名称、跟随、位置、3D层、旋转、标记
+                    newCopy.name = copyName;
+                    newCopy.enabled = true;
+                    newCopy.label = (maskIndex-1) % 16 +1;
+                    addCommentProps(newCopy,{"formationName":maskLayer.name});
+                    newCopy.position.expression =
+                            "var srcLayer = thisComp.layer(\"" + maskLayer.name + "\"); \r" +
+                            '//var srcLayer = effect("Formation Layer")("Layer"); \r' +
+                            "var srcPath = srcLayer.mask(\"" + path.name + "\").maskPath.points()[" + o + "]; \r" +
+                            'srcLayer.toWorld(srcPath);';
+                    if(footageLayer instanceof AVLayer && footageLayer.name!="LightProxy"){
+                        var flow = newCopy .effect.addProperty("Checkbox Control");
+                        flow.name = "Flow"
+                        newCopy.threeDLayer=true;
+                        newCopy.blendingMode = BlendingMode.SCREEN;
+                        newCopy.orientation.expression =
+                                "if(!effect(\"Flow\")(\"Checkbox\").value){\r" +
+                                "   var cam = thisComp.activeCamera;\r" + 
+                                "   if(cam.hasParent){ var aim = cam.position + cam.parent.position}else{ var aim =  cam.position;}\r" + 
+                                "   lookAt([aim[0],position[1],aim[2]],position);\r" +
+                                "}else{[90,0,0]};";
+                    }
+                }
+                else{ // 层已经存在
+                    // 将已存在的层设置为前一层
+                    preLayer = curComp.layer(copyName);
+                }
+           }// end for
+            //当mask的点变少时，删除多余的层
+            //deleteExtraLayers(curComp, footageLayer.name +":"+path.name+":[", pathPoints.length+1, "]")
+            //注意：新版本更名为：阵型层名+路径名+编号
+            deleteExtraLayers(curComp, maskLayer.name +":"+path.name+":[", pathPoints.length+1, "]")
         }//end if
         else{
         // 复制到路径线上
                 var existingEffects=null;
                 var num=null;
-                for (var o=1; o<=parentLayer.property("ADBE Effect Parade").numProperties; o++){
-                    var targetEffect = parentLayer.property("ADBE Effect Parade").property(o);
+                for (var o=1; o<=maskLayer.property("ADBE Effect Parade").numProperties; o++){
+                    var targetEffect = maskLayer.property("ADBE Effect Parade").property(o);
                     if(targetEffect.name==("num " + path.name)){
                         existingEffects=targetEffect;
                         num = existingEffects.property("ADBE Slider Control-0001").value;
                     }//end if
                 }//end for
                 if(existingEffects==null){ 
-                    existingEffects = parentLayer.effect.addProperty("Slider Control");
+                    existingEffects = maskLayer.effect.addProperty("Slider Control");
                     existingEffects.name = ("num " + path.name);
                     existingEffects.property("ADBE Slider Control-0001").setValue(10);
                     existingEffects.property("ADBE Slider Control-0001").expression=
@@ -164,59 +178,67 @@ function copyToPath(point){
                 if(path.maskShape.value.closed){count=0;}
                 
                 for (var o=0; o<num; o++){
-                    var copyName = copyLayer.name +":"+path.name+":["+(o+1)+"]";
+                    // 获取新层的名称，并判定是否已存在，没有就创建，有则记录层位置和动画起点时间
+                    var copyName = footageLayer.name +":"+path.name+":["+(o+1)+"]";
+                    
+                    //注意：新版本更名为：阵型层名+路径名+编号
+                    if(curComp.layer(copyName) == undefined){
+                        copyName = maskLayer.name +":"+path.name+":["+(o+1)+"]";
+                    }else{
+                        var tempName = maskLayer.name +":"+path.name+":["+(o+1)+"]";
+                        curComp.layer(copyName).name = tempName;
+                        copyName = tempName;
+                    }
+                    
+                    // 如果该层不存在，则创建新层，如果，存在记录层索引和起点时间
                     if(curComp.layer(copyName) == undefined){
                         //alert(copyName)
-                        var newCopy = copyLayer.duplicate();
+                        var newCopy = footageLayer.duplicate();
                         
-                        // 设置层位置和入画时间
+                        // 设置新层到前一层下面位置和对齐前一层的入画时间
                         if(preLayer!=null){ 
-                            //alert(preLayer.name)
                             newCopy.moveAfter(preLayer);
-                            //alert(preStartTime)
-                            newCopy.startTime = preStartTime;
+                            newCopy.startTime = preLayer.startTime;
                         }
+                        // 将新层设置为前一层
                         preLayer = newCopy;
-                        preStartTime = newCopy.startTime;
                         
                         // 设置名称、跟随、位置、3D层、旋转、标记
                         newCopy.name = copyName;
                         newCopy.enabled = true;
                         newCopy.label = (maskIndex-1) % 16 +1;
-                        newCopy.position.expression =
-                                                    "var srcLayer = thisComp.layer(\"" + parentLayer.name + "\"); \r" +
-                                                    "var srcPath = srcLayer.mask(\"" + path.name + "\").maskPath.pointOnPath( " + o +" / (srcLayer.effect(\""+ existingEffects.name +"\")(\"Slider\")-(1-srcLayer.mask(\"" + path.name + "\").maskPath.isClosed()))); \r" +
-                                                    "srcLayer.toWorld(srcPath);";
-                        if(copyLayer instanceof AVLayer && copyLayer.name!="LightProxy"){
+                        newCopy.blendingMode = BlendingMode.SCREEN;
+                        addCommentProps(newCopy,{"formationName":maskLayer.name});
+                        newCopy.position.expression = 
+                                "var srcLayer = thisComp.layer(\"" + maskLayer.name + "\"); \r" +
+                                '//var srcLayer = effect("Formation Layer")("Layer"); \r' +
+                                "var srcPath = srcLayer.mask(\"" + path.name + "\").maskPath.pointOnPath( " + o +" / (srcLayer.effect(\""+ existingEffects.name +"\")(\"Slider\")-(1-srcLayer.mask(\"" + path.name + "\").maskPath.isClosed()))); \r" +
+                                "srcLayer.toWorld(srcPath);";
+                        if(footageLayer instanceof AVLayer && footageLayer.name!="LightProxy"){
                             var flow = newCopy .effect.addProperty("Checkbox Control");
                             flow.name = "Flow"
                             newCopy.threeDLayer=true;
                             newCopy.orientation.expression =
-                                                "if(!effect(\"Flow\")(\"Checkbox\").value){\r" +
-                                                "   try{delta = toWorld(anchorPoint) - thisComp.activeCamera.toWorld([0,0,0]);\r" + 
-                                                "       [0,radiansToDegrees(Math.atan2(delta[0],delta[2])),0]}catch(err){[0,0,0];}\r" + 
-                                                "}else{[90,0,0]};";
-                            /*newCopy.transform.zRotation.expression =
-                                            "if(effect(\"Flow\")(\"Checkbox\").value){\r" +
-                                            "   var srcLayer = thisComp.layer(\"" + selectedLayer.name + "\"); \r" +
-                                            "   var pathToTrace = thisComp.layer(\"" + selectedLayer.name + "\")" + pathPath + "; \r" +
-                                            "   var pathTan = pathToTrace.tangentOnPath( " + i +" / srcLayer.effect(\""+ existingEffects.name +"\")(\"Slider\")); \r" +
-                                            "   radiansToDegrees(Math.atan2(pathTan[1],pathTan[0]));\r" + 
-                                            "}else{0};";*/
-                            
-                            newCopy.blendingMode = BlendingMode.SCREEN;
+                                    "if(!effect(\"Flow\")(\"Checkbox\").value){\r" +
+                                    "   try{delta = toWorld(anchorPoint) - thisComp.activeCamera.toWorld([0,0,0]);\r" + 
+                                    "       [0,radiansToDegrees(Math.atan2(delta[0],delta[2])),0]}catch(err){[0,0,0];}\r" + 
+                                    "}else{[90,0,0]};";
                         }//end if
                     }//end if
-                    else{ 
+                    else{  // 层已经存在
+                        // 将已存在的层设置为前一层
                         preLayer = curComp.layer(copyName);
-                        preStartTime = curComp.layer(copyName).startTime;
                     }
                 }//end for
                 //当mask的点变少时，删除多余的层
-                deleteExcessLayer(curComp, copyLayer.name +":"+path.name+":[", num+1, "]")
+                //deleteExtraLayers(curComp, footageLayer.name +":"+path.name+":[", num+1, "]")
+                //注意：新版本更名为：阵型层名+路径名+编号
+                deleteExtraLayers(curComp, maskLayer.name +":"+path.name+":[", num+1, "]")
         }//end else
     }//end for
 
+    // 删除素材层的mask层控件
+    //control.remove()
 
     app.endUndoGroup();
 }
@@ -236,55 +258,6 @@ function flow(){
     app.endUndoGroup();
 }
 //flow()
-// 删除位置表达式
-function deletePosExp(){
-     app.beginUndoGroup("删除路径表达式");
-    var selectLayers = getSelectedLayers(getActiveComp());
-    if (selectLayers.length>0){
-            forEachLayer(selectLayers, function(selcetLayer){
-                                                        var currterProprety = selcetLayer.property("Transform").property("Position");
-                                                        var temp = currterProprety.value;
-                                                        currterProprety.expression="";
-                                                        currterProprety.setValue(temp);
-                                                    }) 
-    }else{alert("请选择至少一个层")}
-    app.endUndoGroup();
-}
-//deletePosExp()
-// 删除旋转表达式
-function deleteRotExp(){
-    app.beginUndoGroup("删除旋转表达式");
-    
-    var selectLayers = getSelectedLayers(getActiveComp());
-    if (selectLayers.length==0)
-    {
-            alert("请选择至少一个层");
-            return
-    }
-
-    for(var i=0; i<selectLayers.length;i++){
-        var layer = selectLayers[i];
-        
-        var curOr = layer.property("Transform").property("Orientation").value;
-        var curXR = layer.property("Transform").property("X Rotation").value;
-        var curYR = layer.property("Transform").property("Y Rotation").value;
-        var curZR = layer.property("Transform").property("Z Rotation").value;
-
-        layer.property("Transform").property("Orientation").expression="";
-        layer.property("Transform").property("X Rotation").expression="";
-        layer.property("Transform").property("Y Rotation").expression="";
-        layer.property("Transform").property("Z Rotation").expression="";
-        
-        layer.property("Transform").property("Orientation").setValue(curOr);
-        layer.property("Transform").property("X Rotation").setValue(curXR);
-        layer.property("Transform").property("Y Rotation").setValue(curYR);
-        layer.property("Transform").property("Z Rotation").setValue(curZR);
-   }
-
-    app.endUndoGroup();
-}
-//deleteRotExp()
-
 
 //var str = "var srcLayer = thisComp.layer(\"Control\");";
 function matchLayerNameFormExpression(text){
@@ -299,82 +272,103 @@ function arrayAddUnique(targetArray,elemt){
     }
     targetArray.push(elemt);
 }
-
-// 添加相机到预合成
-function addCameraToPercomp(camera,targetPrecompLayer){
-    var precompStartTime = targetPrecompLayer.startTime;
-    var cameraStartTime = camera.startTime;
-    //alert(targetPrecompLayer.name)
-    var scrPrecomp = targetPrecompLayer.source;
-    camera.copyToComp(scrPrecomp);
-    var precamera = scrPrecomp.layer(1);
-    precamera.startTime = cameraStartTime-precompStartTime;
-    return precamera
-}
-
-// 预合成喷泉
-function precompGroup(precompName,layers,curComp){
-    var parentComp = curComp;
-    var precompIndices = [];
-    var formation = [];
-    var Inpoint = 999999999999999999;
-    var Outpoint = 0;
-    
-    // 复制阵型到预合成中
-    var formation = curComp.layer("formation");
-    var copy =  formation.duplicate();
-    precompIndices.push(formation.index);
-    // 获取选择层的index
-    for (var i=0;i<layers.length; i++){  
-         var layer = layers[i];
-         precompIndices.push(layer.index);            // new array with layers indexes  
-         
-         (Inpoint > layer.inPoint) ? Inpoint = layer.inPoint : Inpoint;                  // begin of precomp  
-         (Outpoint < layer.outPoint) ? Outpoint = layer.outPoint : Outpoint;       // end of precomp  
-         /*
-         // 获取表达式关联的层
-         var expr = selectLayers[l].transform.position.expression;
-         expr = expr.split(";")[0];
-         var name = matchLayerNameFormExpression(expr);
-         //alert(name)
-         if(name){formation.push(name)}*/
-    }
-    
-    var duration = Outpoint - Inpoint;  
-    //alert(precompIndices.length)
-    var precomp = parentComp.layers.precompose(precompIndices, precompName, true);
-    var adjustStartTime = precomp.duration, newCompDuration = 0;
-    
-    adjustStartTime = adjustStartTime > Inpoint ? Inpoint : adjustStartTime;  
-    newCompDuration = newCompDuration < duration? duration : newCompDuration;  
-    
-    for(var i=1; i<=precomp.layers.length; i++){precomp.layer(i).startTime -= adjustStartTime;}
-    
-    precomp.duration = newCompDuration; 
-    parentComp.layer(precompName).startTime = adjustStartTime;
-
-    // 添加相机和阵型    
-     for(var i=curComp.numLayers; i>=1; i--){
-        var curLayer = curComp.layer(i);
-        
-        if(curLayer instanceof CameraLayer){
-            //alert(curLayer.name)
-            addCameraToPercomp(curLayer,parentComp.layer(precompName));
-        }
-     }
-    /* 最后添加阵型，撤销操作时会崩溃！！！
-    var formation = curComp.layer("formation");
-    formation.copyToComp(precomp);
-    */
-    return parentComp.layer(precompName);
-}
-
 function arrayIndexOf(array,value){
     for(var i=0;i<array.length;i++){
         if(array[i]==value){return i}
     }
     return -1
 }
+// 添加相机到预合成
+function addCameraToPercomp(cameraLayer,precompLayer){
+    var precompStartTime = precompLayer.startTime;
+    var cameraStartTime = cameraLayer.startTime;
+    //alert(targetPrecompLayer.name)
+    var scrPrecomp = precompLayer.source;
+    cameraLayer.copyToComp(scrPrecomp);
+    var precamera = scrPrecomp.layer(1);
+    precamera.startTime = cameraStartTime-precompStartTime;
+    return precamera
+}
+// 预合成喷泉
+function precompGroup(precompName,layers,curComp){
+    var parentComp = curComp;
+    var preLayers = [];
+    var precompIndices = []; // 所有要预合成层的index值
+    var formations = [];
+    var Inpoint = 999999999999999999;
+    var Outpoint = 0;
+    
+/*    // 删除控件：剪切层会导致控件层丢失！！// 由于添加了层控件，与合成的时候，会自动将阵型添加到合成中。所以，不再需要复制阵型！
+    // 复制要预合成阵型
+    var formation = curComp.layer("formation");
+    var copy =  formation.duplicate();
+    precompIndices.push(formation.index);*/
+
+    // 获取选择层的index 和 阵型
+    for (var i=0;i<layers.length; i++){  
+        var layer = layers[i];
+        //precompIndices.push(layer.index);            // new array with layers indexes  
+        preLayers.push(layer);
+
+        (layer.inPoint  < Inpoint ) ? Inpoint  = layer.inPoint  : Inpoint;        // begin of precomp  
+        (layer.outPoint > Outpoint) ? Outpoint = layer.outPoint : Outpoint;       // end of precomp  
+        
+        // 获取表达式关联的阵形层
+        // 方法1：直接通过“formation”名字获取。弊端；只能使用一个固定名字
+        // 方法2：使用层控件，会自动预合成。弊端：复制剪切时，层控件会丢失阵型
+        // 方法3：给comment添加阵型名称，然后再获取名称。
+/*        var expr = selectLayers[l].transform.position.expression;
+        expr = expr.split(";")[0];
+        var name = matchLayerNameFormExpression(expr);*/
+        var commentProps = getCommentProps(layer);
+        var formationName = commentProps.formationName;
+        if(formationName!=undefined){
+            if(arrayIndexOf(formations, formationName)==-1){
+                var copy = curComp.layer(formationName).duplicate();
+                copy.name = formationName;
+                preLayers.push(copy);
+                formations.push(formationName);
+            }
+        }
+    }
+    for (var i=0;i<preLayers.length; i++){
+        var layer = preLayers[i];
+        precompIndices.push(layer.index); 
+    }
+    var firstLayerIndex = precompIndices[0];
+
+    var precomp = parentComp.layers.precompose(precompIndices, precompName, true);
+    var precompLayer = parentComp.layer(precompName);
+    precompLayer.moveBefore(curComp.layer(firstLayerIndex));
+
+    // 由于precompose是将comp的整个时长打包，所以调整时间长短和分布
+    var duration = Outpoint - Inpoint;
+    var adjustStartTime = precomp.duration;
+    var newCompDuration = 0;
+    
+    //alert("Inpoint:" + Inpoint + "\n Outpoint:" + Outpoint + "\n adjustStartTime:" + adjustStartTime + "\n newCompDuration:" + newCompDuration)
+    adjustStartTime = adjustStartTime > Inpoint ? Inpoint : adjustStartTime;  
+    newCompDuration = newCompDuration < duration? duration : newCompDuration;  
+    // 将预合成内层的起点移动到预合成的开头，剪短预合成的长度，再将预合成层的起点向后移动最早层的起点
+    for(var i=1; i<=precomp.layers.length; i++){precomp.layer(i).startTime -= adjustStartTime;}
+    precomp.duration = newCompDuration;
+    precompLayer.startTime = adjustStartTime;
+
+
+    // 添加相机
+    for(var i=curComp.numLayers; i>=1; i--){
+        var camLayer = curComp.layer(i);
+        if(camLayer instanceof CameraLayer){
+            addCameraToPercomp(camLayer,precompLayer);
+        }
+    }
+    /* 最后添加阵型，撤销操作时会崩溃！！！
+    var formation = curComp.layer("formation");
+    formation.copyToComp(precomp);
+    */
+    return precompLayer;
+}
+
 function precompLayers(label){
     var curComp = getActiveComp();
     var selectLayers = getSelectedLayers(curComp);

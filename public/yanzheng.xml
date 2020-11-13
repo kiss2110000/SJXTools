@@ -1,0 +1,49 @@
+<xml>
+  <info>
+    <size>500,100</size>
+    <name>首次使用验证码</name>
+  </info>
+  <item>
+    <info>
+      <type>[object Button]</type>
+      <location>400,35</location>
+      <size>70,20</size>
+      <name>but_yanzheng</name>
+      <text>确定</text>
+      <value>NaN</value>
+      <helpTip></helpTip>
+      <color>undefined</color>
+    </info>
+  </item>
+  <item>
+    <info>
+      <type>[object StaticText]</type>
+      <location>20,37</location>
+      <size>70,20</size>
+      <name>statictext_tishi</name>
+      <text>验证码：</text>
+      <value>NaN</value>
+      <helpTip></helpTip>
+      <color>undefined</color>
+    </info>
+  </item>
+  <item>
+    <info>
+      <type>[object EditText]</type>
+      <location>80,36</location>
+      <size>300,20</size>
+      <name>edittext_mima</name>
+      <text></text>
+      <value>NaN</value>
+      <helpTip></helpTip>
+      <BGColor>0.62352941176471,0.62352941176471,0.62352941176471</BGColor>
+      <fontColor>0,0,0</fontColor>
+      <colorCheck>0</colorCheck>
+      <readonly>0</readonly>
+      <noecho>0</noecho>
+      <borderless>0</borderless>
+      <multiline>0</multiline>
+      <enterKeySignalsOnChange>0</enterKeySignalsOnChange>
+    </info>
+  </item>
+</xml>

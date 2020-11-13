@@ -35,6 +35,7 @@ function setDurationOfCompIncludesSubcomp(comp,duration,depth){
 }
 //setDurationOfCompIncludesSubcomp(app.project.activeItem,6,2)
 function copyInstanceCamera(srcCompName, srcCamName, targetComp){
+    
     var camLayer =targetComp.layers.addCamera(srcCamName, [0,0]);
     
     camLayer.transform.pointOfInterest.expression = 'comp("'+srcCompName+'").layer(name).transform.pointOfInterest';
@@ -294,8 +295,8 @@ function createVideoComp(sceneComp,mode){
         if(!uv){uv = app.project.importPlaceholder(uvName, width, height, frameRate, duration);}
         uv.parentFolder = sceneFolder;
         // 添加贴图层
-        var textrueLayer = videoComp.layers.add(textrueComp);
-        textrueLayer.enabled = false;
+        var textureLayer = videoComp.layers.add(textureComp);
+        textureLayer.enabled = false;
         
         // 添加屏倒影层
         var uvLayer2 = videoComp.layers.add(uv);
@@ -345,30 +346,30 @@ function createVideoComp(sceneComp,mode){
             //alert(layerName)
             if(layerName.indexOf("videoCenter")>-1){
                 // 创建贴图合成
-                var textrueName = result[1] + layerName.replace("videoCenter","_textrue");
-                var textrueComp = getCompByName(textrueName);
-                if(textrueComp==null){ 
+                var textureName = result[1] + layerName.replace("videoCenter","_texture");
+                var textureComp = getCompByName(textureName);
+                if(textureComp==null){ 
                     var videoCenter = layer.source;
-                    textrueComp = app.project.items.addComp(textrueName, videoCenter.width, videoCenter.height, pixelAspect, duration, frameRate);
+                    textureComp = app.project.items.addComp(textureName, videoCenter.width, videoCenter.height, pixelAspect, duration, frameRate);
                 }
-                textrueComp.parentFolder = compFolder;
-                textrueComp.label = 16;
+                textureComp.parentFolder = compFolder;
+                textureComp.label = 16;
                 
                 // 添加贴图层
-                var textrueLayer = videoComp.layers.add(textrueComp);
-                textrueLayer.threeDLayer = true;
-                textrueLayer.materialOption.acceptsLights.setValue(0);
-                textrueLayer.materialOption.acceptsShadows.setValue(0);
-                textrueLayer.property("Transform").property("Anchor Point").expression = "[thisLayer.width/2,thisLayer.height,0]";
-                textrueLayer.property("Transform").property("Position").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.position';
-                textrueLayer.property("Transform").property("Scale").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.scale';
-                textrueLayer.property("Transform").property("Orientation").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.orientation';
-                textrueLayer.property("Transform").property("X Rotation").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.xRotation';
-                textrueLayer.property("Transform").property("Y Rotation").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.yRotation';
-                textrueLayer.property("Transform").property("Z Rotation").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.zRotation';
-                textrueLayer.audioEnabled = false;
+                var textureLayer = videoComp.layers.add(textureComp);
+                textureLayer.threeDLayer = true;
+                textureLayer.materialOption.acceptsLights.setValue(0);
+                textureLayer.materialOption.acceptsShadows.setValue(0);
+                textureLayer.property("Transform").property("Anchor Point").expression = "[thisLayer.width/2,thisLayer.height,0]";
+                textureLayer.property("Transform").property("Position").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.position';
+                textureLayer.property("Transform").property("Scale").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.scale';
+                textureLayer.property("Transform").property("Orientation").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.orientation';
+                textureLayer.property("Transform").property("X Rotation").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.xRotation';
+                textureLayer.property("Transform").property("Y Rotation").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.yRotation';
+                textureLayer.property("Transform").property("Z Rotation").expression = 'comp("AllCamComp").layer("' + layerName + '").transform.zRotation';
+                textureLayer.audioEnabled = false;
                 try{
-                    var ref = textrueLayer.effect.addProperty("VC Reflect");
+                    var ref = textureLayer.effect.addProperty("VC Reflect");
                 }
                 catch(e){
                     alert("缺少特效：VC Reflect ")
@@ -660,6 +661,22 @@ function createSceneComp(name, width, height, pixelAspect, duration, frameRate){
     // 添加颜色层，并设置曝光
     var colorName = result[1] +  "_Color";
     var color = getSceneByName(colorName);
+    
+    if(!color){
+        colorName = result[1] +  ".";
+        color = getSceneByName(colorName);
+        
+//~         var sceneFolder = getRootFolderByName("scene");
+//~         if(sceneFolder!=null){
+
+//~             var numItems = sceneFolder.numItems;
+//~             for (var i=1; i<=numItems; i++) {
+//~                 var item = sceneFolder.item(i);
+//~                 // 获取名称需要更多的时间.所以先判断类型
+//~                 if( (item instanceof FootageItem) && (item.name.indexOf(sceneName)>-1) ) { return item;}
+//~             }
+//~         }
+    }
     if(!color){color = app.project.importPlaceholder(colorName, width, height, frameRate, duration);}
     color.parentFolder = sceneFolder;
     var colorLayer = sceneComp.layers.add(color);
@@ -1096,6 +1113,141 @@ function addMatterToComp(){
     app.endUndoGroup();
 }
 //addMatterToComp()
+function addMatterToLayers(){
+    app.beginUndoGroup("添加MatterLayers");
+    
+    var comp = getActiveComp();
+    var layers = getSelectedLayers(comp);
+    var num = layers.length;
+    if(num==0){
+        alert("至少选择一个层！")
+        return 
+    }
+
+    
+    var compName = comp.name;
+    // 正则表达式获取，名称中相机编号。例如：C02_Comp
+    var reg = /(C\d{2})_/g;
+    var result = reg.exec(compName);
+    if(!result){
+        alert( "没有镜头编号："+compName)
+        return null
+    }
+    if(compName.indexOf("_Comp") != -1){
+        //  更新elementComp
+        // 获取sceneComp的Matter层,如果没有则创建
+        var matterName = result[1]+"_Matter";
+        var matterLayer = comp.layer(matterName);
+        if(matterLayer==null){
+            // 添加合成
+            var matterComp = getCompByName(matterName);
+            if(matterComp==null){
+                alert("场景'"+ result[1] +"_Comp'合成中还灭有创建Matter合成！")
+                return null;
+            }
+        }
+        for(var i=0;i<num;i++){
+            var layer = layers[i];
+            var setMatter = layer.effect.addProperty("Set Matte");
+            setMatter.name = "Matter of  Front";
+            setMatter.property("Take Matte From Layer").setValue(matterLayer.index);
+            setMatter.property("Use For Matte").setValue(4);
+            setMatter.property("Invert Matte").setValue(1);
+            setMatter.moveTo(1);
+        }
+    }
+    app.endUndoGroup();
+}
+//addMatterToLayers();
+
+function addCenterToComp(){
+    app.beginUndoGroup("addCenterToComp");
+    
+    // 获取 sceneComp
+    var sceneComps = getSelectedSceneComps();
+    if(sceneComps.length==0){ 
+        alert("没有选择SceneComp！")
+        return 
+    }
+    
+    
+    var num = sceneComps.length;
+    for(var i=0; i<num; i++){
+        var sceneInfo = sceneComps[i];
+        var sceneCam = sceneInfo.cam;
+        var sceneComp = sceneInfo.comp;
+
+        // 检查Center合成
+        var centerName = sceneComp.name + "_Center";
+        var center = sceneComp.layer(centerName);
+        if(center != null){
+            center.selected = true;
+            
+            // 更新表达式
+            var centerComp = center.source;
+            var circleLayer = centerComp.layer("Center");
+            circleLayer.transform.position.expression = 'comp("'+ sceneComp.name +'").layer("'+ center.name +'").effect("Position")("3D Point")';
+            circleLayer.transform.scale.expression = 'var temp = comp("'+ sceneComp.name +'").layer("'+ center.name +'").effect("Scale")("Slider"); \n[temp,temp]';
+            var circleMask=circleLayer.mask("centerCircle");
+            circleMask.maskFeather.expression = 'var temp = comp("'+ sceneComp.name +'").layer("'+ center.name +'").effect("Feather")("Slider"); \n[temp,temp]';
+            circleMask.maskExpansion.expression = 'mask("centerCircle").maskFeather[0] * -1';
+            return 
+        }
+        // 创建Center合成
+        var centerComp = getCompByName(centerName);
+        if(centerComp==null){
+            var centerComp = app.project.items.addComp(sceneComp.name + "_Center",sceneComp.width,sceneComp.height,1,sceneComp.duration,sceneComp.frameRate);
+            centerComp.parentFolder = getRootFolderByName("comp");
+            centerComp
+
+            // 添加Solide
+            var centerSolidItems = getSolidItem("Center");
+            if(centerSolidItems.length!=0){
+                var centerLayer =  centerComp.layers.add(centerSolidItems[0]);
+            }
+            else{
+                var centerLayer = centerComp.layers.addSolid([1,1,1], "Center", 1500, 1500, 1, sceneComp.duration);
+            }
+            centerLayer.threeDLayer = true;
+            centerLayer.transform.orientation.setValue([270,0,0]);
+            //添加mask
+            var centerMask=createEllipseMask(centerLayer);
+            centerMask.name = "centerCircle";
+            
+            copyInstanceCamera("AllCamComp", sceneCam, centerComp)
+        }
+        
+        // 获取fountain层的位置信息
+        var allCamComp = getCompByName("AllCamComp");
+        var formationLayer = allCamComp.layer("formation");
+        var pos = getCompByName("AllCamComp").layer("formation").transform.position.value;
+        //alert(pos);
+        
+        // 添加center到场景中，并设置控件
+        var center = sceneComp.layers.add(centerComp);
+        center.label = 0
+        var positonCtl = center.effect.addProperty("3D Point Control");
+        positonCtl.name = "Position";
+        positonCtl("3D Point").setValue(pos);
+        var scaleCtl = center.effect.addProperty("Slider Control");
+        scaleCtl("Slider").setValue(300);
+        scaleCtl.name = "Scale";
+        var featherCtl = center.effect.addProperty("Slider Control");
+        featherCtl("Slider").setValue(200);
+        featherCtl.name = "Feather";
+        
+        // 设置表达式
+        var circleLayer = centerComp.layer("Center");
+        circleLayer.transform.position.expression = 'comp("'+ sceneComp.name +'").layer("'+ center.name +'").effect("Position")("3D Point")';
+        circleLayer.transform.scale.expression = 'var temp = comp("'+ sceneComp.name +'").layer("'+ center.name +'").effect("Scale")("Slider"); \n[temp,temp]';
+        var circleMask=circleLayer.mask("centerCircle");
+        circleMask.maskFeather.expression = 'var temp = comp("'+ sceneComp.name +'").layer("'+ center.name +'").effect("Feather")("Slider"); \n[temp,temp]';
+        circleMask.maskExpansion.expression = 'mask("centerCircle").maskFeather[0] * -1';
+    }
+    app.endUndoGroup();
+}
+//addCenterToComp()
+
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 
 
@@ -1275,28 +1427,28 @@ function addCameraLayer(){
 function addTextrueMatter(){
      app.beginUndoGroup("添加videoMatter");
     // 获取选择的VideoComp 
-    var textrueItems = new Array();
+    var textureItems = new Array();
     var selItems = app.project.selection;
     for(var i=0;i<selItems.length;i++){
         var item = selItems[i];
-        if(item.name.indexOf ("textrue")!=-1){ textrueItems.push(item);}
+        if(item.name.indexOf ("texture")!=-1){ textureItems.push(item);}
     }
-    //alert(textrueItems)
+    //alert(textureItems)
     
     
     // 获取videoMatter
     var allCamComp = getCompByName("AllCamComp");
     var videoLayer = allCamComp.layer("videoCenter");
     var videoComp = videoLayer.source;
-    var textrueMatterLayer = videoComp.layer("videoMatter");
-    //alert(textrueMatterLayer);
+    var textureMatterLayer = videoComp.layer("videoMatter");
+    //alert(textureMatterLayer);
     
-    // 从新复制matter到textrue
-    for(var i=0;i<textrueItems.length;i++){
-        var textrueComp = textrueItems[i];
-        var matterLayer = textrueComp.layer("videoMtter");
+    // 从新复制matter到texture
+    for(var i=0;i<textureItems.length;i++){
+        var textureComp = textureItems[i];
+        var matterLayer = textureComp.layer("videoMtter");
         if(matterLayer!=null){matterLayer.remove()}
-        textrueMatterLayer.copyToComp(textrueComp)
+        textureMatterLayer.copyToComp(textureComp)
     }
     app.endUndoGroup();
 }
@@ -1453,8 +1605,8 @@ function addLaserVideoByLaserLight(){
                 textureComp.label = laserComp.label;
                 var textureLayer = videoComp.layers.add(textureComp,duration);
                 textureLayer.threeDLayer = true;
-                textrueLayer.materialOption.acceptsLights.setValue(0);
-                textrueLayer.materialOption.acceptsShadows.setValue(0);
+                textureLayer.materialOption.acceptsLights.setValue(0);
+                textureLayer.materialOption.acceptsShadows.setValue(0);
                 
                 textureLayer.moveToEnd();
                 
@@ -1774,7 +1926,7 @@ function createFog(){
         fogLayer.enabled = false;
         var formation = comp.layer("formation");
         if(formation!=null){
-            fogLayer.moveAfter();
+            //fogLayer.moveAfter();
         }
 
         fogLayer.blendingMode = BlendingMode.SCREEN;

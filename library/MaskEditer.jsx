@@ -504,45 +504,7 @@ function offsetMask(numb){
     app.endUndoGroup();
 }
 //offsetMask(-50)
-function cubeBezierCurve(a,b,c,d,t){
-    // P(t) = A*(1-t)*(1-t)*(1-t) + B*3*(1-t)*(1-t)*t + C*3*(1-t)*t*t + D*t*t*t,  t=0,1
-    if(0<= t <=1){
-        var p = a*(1-t)*(1-t)*(1-t) + b*3*(1-t)*(1-t)*t + c*3*(1-t)*t*t + d*t*t*t
-        return p
-    }else(alert("Parameter 't' beyond range!"))
-}
-//alert(cubeBezierCurve([58,361],[368,373],[351,128],[512,96],0.34))
-function offsetFrameByBezierCurve(){
-    if (parseFloat(app.version) > 11.0){
-        var win = new Window("palette", undefined, undefined, {borderless: false});
-        win.margins = [0,0,0,0];
-        var scriptpath = new File($.fileName);
-        var flash = win.add ("flashplayer", undefined);
-        flash.loadMovie(File (scriptpath.parent.fsName + "/Offset_Frame_By_Bezier_Curve_resources/DeCasteljau_Bezier_Curve.swf"));
-       
-        flash.createAEcomp = function(Ax,Ay,tgAx,tgAy,tgBx,tgBy,Bx,By,val){
-                app.beginUndoGroup("Offset Frame By Bezier Curve");
-                var a=[Ax,Ay], b=[tgAx,tgAy], c=[tgBx,tgBy], d=[Bx,By];
-                var selectLayers = getSelectedLayers(getActiveComp());
-                var fr = getActiveComp().frameRate;
-                
-                var min = getMinST(selectLayers);
-                var max = getMaxST(selectLayers);
-                var dur = max-min;
-                for(i=0,ii=selectLayers.length;i<ii;i++){
-                    var numb =i/(ii-1);
-                    var p = cubeBezierCurve(a,b,c,d,numb)
-                    var time = (a[0]-p[0])/(a[0]-d[0])*dur;
-                    
-                    selectLayers[i].startTime=(min+time)/fr;
-                }
-                app.endUndoGroup();
-            }
-        flash.closeScriptWindow = function(){ win.close(); }
-        win.show();
-    }
-}
-//offsetFrameByBezierCurve()
+
 
 function subVector(A,B){
     var x = A[0]-B[0];
@@ -588,4 +550,193 @@ function setLigthDiraction(){
         
     }
 }
-setLigthDiraction()
+//setLigthDiraction()
+function setMaskVertices(mask,vertices){
+    var shape = mask.maskShape.value;
+    shape.vertices = vertices;
+    shape.closed=false;
+    mask.maskShape.setValue(shape);
+}
+
+// 为制作网格校对时，添加最后的辅助线
+function createMaskByKeyFromSelectedPoints(){
+    app.beginUndoGroup("createMaskFromSelectedPoints");
+    
+    var comp = app.project.activeItem
+    var layers = comp.selectedLayers
+    var targetLayer = layers.pop();
+    
+    var oldTime = comp.time;
+    
+    // 第一步：在第一帧创建mask，并添加关键帧
+    comp.time=0;
+    var pts = [];
+    for(var i=0;i<layers.length;i++){
+        var layer = layers[i];
+        var pos = layer.transform.position.value;
+        pts.push([pos[0],pos[1]]);
+    }
+    var newMask = addMask(targetLayer);
+    newMask.color = [1,0,0];
+    var shape = mask.maskShape.value;
+    setMaskVertices(newMask,pts);
+    newMask.maskPath.addKey(targetLayer.time)
+    
+    // 第二步：在第二帧，添加关键帧
+    comp.time=0.04;
+    pts = [];
+        for(var i=0;i<layers.length;i++){
+        var layer = layers[i];
+        var pos = layer.transform.position.value;
+        pts.push([pos[0],pos[1]]);
+    }
+    var shape = newMask.maskShape.value;
+    shape.vertices = pts;
+    shape.closed=false;
+    newMask.maskPath.setValueAtTime(targetLayer.time,shape)
+
+    comp.time=oldTime;
+    
+    app.endUndoGroup();
+}
+//createMaskByKeyFromSelectedPoints()
+
+// 为制作网格校对时，添加最后的辅助线
+function createMaskByEpressionFromSelectedPoints(){
+    app.beginUndoGroup("createMaskFromSelectedPoints");
+    
+    var comp = app.project.activeItem;
+    var layers = comp.selectedLayers;
+    var targetLayer = layers.pop();
+    
+    if(layers.length ==0) return
+
+    var ptNames = [];
+    for(var i=0;i<layers.length;i++){
+        var layer = layers[i];
+        var name = layer.name;
+        var lc = targetLayer.effect.addProperty("Layer Control");
+        lc.name = name;
+        lc.property("Layer").setValue(layer.index);
+        ptNames.push(name);
+    }
+
+    var newMask = addMask(targetLayer);
+    newMask.color = [1,1,0];
+    newMask.locked = true
+    var names = 'var nullLayerNames = [';
+    
+    for(var i=0;i<ptNames.length;i++){
+        names = names + '"' + ptNames[i] + '",'
+    }
+    names = names +  ']; '
+    
+    var exp = '''
+var origPath = thisProperty; 
+var origPoints = origPath.points(); 
+var getNullLayers = []; 
+for (var i = 0; i < nullLayerNames.length; i++){ 
+    try{  
+        getNullLayers.push(effect(nullLayerNames[i])("ADBE Layer Control-0001")); 
+    } catch(err) { 
+        getNullLayers.push(null); 
+    }} 
+for (var i = 0; i < getNullLayers.length; i++){ 
+    if (getNullLayers[i] != null && getNullLayers[i].index != thisLayer.index){ 
+        origPoints[i] = fromCompToSurface(getNullLayers[i].toComp(getNullLayers[i].anchorPoint));  
+    }} 
+createPath(origPoints,[],[],false);'''
+    
+    names = names +  exp;
+    
+    //alert(names)
+    
+     newMask.maskPath.expression = names
+    
+    app.endUndoGroup();
+}
+//createMaskByEpressionFromSelectedPoints()
+
+
+// ---------------------------------------------- // Mask导出Houdini // ---------------------------------------------- // 
+
+function maskOBJ(mask){
+    //alert(mask)
+    var color  = mask.color;
+    var name = mask.name;
+    //alert(color)
+    var shapeValue  = mask.maskPath.value;
+    //alert(shape)
+    var vertices = shapeValue.vertices;
+    //alert(vertices)
+    var closed = shapeValue.closed;
+    var inTangents = shapeValue.inTangents ;
+    var outTangents = shapeValue.outTangents ;
+    //alert(outangents)
+
+    var MaskOBJ = {"type":"Mask","name":name,"color":color,"shape":{"closed":closed,"vertices":vertices,"inTangents":inTangents,"outTangents":outTangents}};
+    //alert(MaskOBJ)
+    return MaskOBJ;
+}
+
+function layerOBJ(layer){
+    var LayerOBJ = {};
+    LayerOBJ["type"] = "Layer";
+    LayerOBJ["name"] = layer.name;
+    LayerOBJ["width"] = layer.width;
+    LayerOBJ["height"] = layer.height;
+    LayerOBJ["label"] = layer.label;
+    
+    var maskList = [];
+    var masks = layer.mask;
+    for(var i=1;i<=masks.numProperties;i++){
+        var mask = masks.property(i);
+        //alert(mask.name)
+        maskList.push(maskOBJ(mask));
+    }
+    LayerOBJ["mask"] = maskList;
+
+    return LayerOBJ
+}
+
+function exportMaskAsJSON(){
+    var comp = app.project.activeItem;
+    var layers = comp.selectedLayers;
+    var layer = layers[0];
+
+    var str = JSON.stringify(layerOBJ(layer));
+    saveTxtFile (str, "/c/temp/exportMaskAsJSON.txt");
+}
+//exportMaskAsJSON()
+function importMaskByJSON(){
+    var str = openTxtFile("/c/temp/importMaskByJSON.txt");
+    //alert(str)
+    var LayerOBJ = JSON.parse(str);
+    //alert(LayerOBJ)
+    //alert(LayerOBJ["name"])
+    var comp = app.project.activeItem;
+    var layer = comp.layers.addSolid([0,0,0], LayerOBJ["name"], LayerOBJ["width"], LayerOBJ["height"], comp.pixelAspect, comp.duration)
+    layer.label = LayerOBJ["label"]
+    var maskList = LayerOBJ["mask"]
+    for(var i=0;i<maskList.length;i++){
+        var MaskOBJ = maskList[i];
+        var mask=layer.mask.addProperty("ADBE Mask Atom");
+        mask.name = MaskOBJ["name"];
+        mask.color = MaskOBJ["color"];
+        
+        var ShapeOBJ = MaskOBJ["shape"];
+        var shape = new Shape();
+        shape.closed=ShapeOBJ["closed"];
+        shape.vertices=ShapeOBJ["vertices"];
+        shape.inTangents=ShapeOBJ["inTangents"];
+        shape.outTangents=ShapeOBJ["outTangents"];
+        
+        mask.maskPath.setValue(shape);
+
+}
+//~     var layers = comp.selectedLayers;
+//~     var layer = layers[0];
+
+}
+//importMaskByJSON()
+// ---------------------------------------------- // Mask导出Houdini // ---------------------------------------------- // 

@@ -1,0 +1,18 @@
+<xml>
+  <info>
+    <size>165,35</size>
+    <name>new project</name>
+  </info>
+  <item>
+    <info>
+      <type>[object Button]</type>
+      <location>30,5</location>
+      <size>100,20</size>
+      <name>but_1</name>
+      <text>Open Fountain</text>
+      <value>NaN</value>
+      <helpTip></helpTip>
+      <color>undefined</color>
+    </info>
+  </item>
+</xml>

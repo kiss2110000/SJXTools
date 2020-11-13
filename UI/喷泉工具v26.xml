@@ -529,7 +529,7 @@
           <location>80,5</location>
           <size>20,20</size>
           <name>iconbut_export</name>
-          <text>undefined</text>
+          <text></text>
           <value>NaN</value>
           <helpTip></helpTip>
           <path>/f/Git_Repos/SJXTools/UI/export.png</path>
@@ -544,7 +544,7 @@
           <location>105,5</location>
           <size>20,20</size>
           <name>iconbut_import</name>
-          <text>undefined</text>
+          <text></text>
           <value>NaN</value>
           <helpTip></helpTip>
           <path>/f/Git_Repos/SJXTools/UI/import.png</path>
@@ -806,6 +806,21 @@
           <value>NaN</value>
           <helpTip></helpTip>
           <color>NaN</color>
+        </info>
+      </item>
+      <item>
+        <info>
+          <type>[object IconButton]</type>
+          <location>155,5</location>
+          <size>20,20</size>
+          <name>iconbut_DelScaleExp</name>
+          <text>undefined</text>
+          <value>NaN</value>
+          <helpTip></helpTip>
+          <path>/f/Git_Repos/SJXTools/UI/É¾³ý±í´ïÊ½S.png</path>
+          <putInImg>\u0089PNG\r\n\x1A\n\x00\x00\x00\rIHDR\x00\x00\x00\x14\x00\x00\x00\x14\b\x06\x00\x00\x00\u008D\u0089\x1D\r\x00\x00\x00\tpHYs\x00\x00\x0B\x13\x00\x00\x0B\x13\x01\x00\u009A\u009C\x18\x00\x00\n\u00F5iTXtXML:com.adobe.xmp\x00\x00\x00\x00\x00&lt;?xpacket begin=\"\u00EF\u00BB\u00BF\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?&gt; &lt;x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"Adobe XMP Core 5.6-c145 79.163499, 2018/08/13-16:40:22        \"&gt; &lt;rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"&gt; &lt;rdf:Description rdf:about=\"\" xmlns:xmp=\"http://ns.adobe.com/xap/1.0/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xmpMM=\"http://ns.adobe.com/xap/1.0/mm/\" xmlns:stEvt=\"http://ns.adobe.com/xap/1.0/sType/ResourceEvent#\" xmlns:stRef=\"http://ns.adobe.com/xap/1.0/sType/ResourceRef#\" xmlns:photoshop=\"http://ns.adobe.com/photoshop/1.0/\" xmlns:tiff=\"http://ns.adobe.com/tiff/1.0/\" xmlns:exif=\"http://ns.adobe.com/exif/1.0/\" xmp:CreatorTool=\"Adobe Photoshop CS6 (Windows)\" xmp:CreateDate=\"2017-10-20T21:24:09+08:00\" xmp:MetadataDate=\"2020-04-20T12:36:11+08:00\" xmp:ModifyDate=\"2020-04-20T12:36:11+08:00\" dc:format=\"image/png\" xmpMM:InstanceID=\"xmp.iid:dfbb7ec0-e747-a94c-9843-95754e9afc41\" xmpMM:DocumentID=\"adobe:docid:photoshop:1d1a7328-e142-dc43-8f99-515dc0ae5406\" xmpMM:OriginalDocumentID=\"xmp.did:6F08E9D699B5E711B0C38CA49283DB2D\" photoshop:ColorMode=\"3\" photoshop:ICCProfile=\"sRGB IEC61966-2.1\" tiff:Orientation=\"1\" tiff:XResolution=\"720000/10000\" tiff:YResolution=\"720000/10000\" tiff:ResolutionUnit=\"2\" exif:ColorSpace=\"1\" exif:PixelXDimension=\"20\" exif:PixelYDimension=\"20\"&gt; &lt;xmpMM:History&gt; &lt;rdf:Seq&gt; &lt;rdf:li stEvt:action=\"created\" stEvt:instanceID=\"xmp.iid:6F08E9D699B5E711B0C38CA49283DB2D\" stEvt:when=\"2017-10-20T21:24:09+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CS6 (Windows)\"/&gt; &lt;rdf:li stEvt:action=\"saved\" stEvt:instanceID=\"xmp.iid:7108E9D699B5E711B0C38CA49283DB2D\" stEvt:when=\"2017-10-20T21:28:38+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CS6 (Windows)\" stEvt:changed=\"/\"/&gt; &lt;rdf:li stEvt:action=\"saved\" stEvt:instanceID=\"xmp.iid:e83a32cb-43da-a545-9be1-c772ef472acf\" stEvt:when=\"2020-04-20T12:36:11+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CC 2019 (Windows)\" stEvt:changed=\"/\"/&gt; &lt;rdf:li stEvt:action=\"converted\" stEvt:parameters=\"from application/vnd.adobe.photoshop to image/png\"/&gt; &lt;rdf:li stEvt:action=\"derived\" stEvt:parameters=\"converted from application/vnd.adobe.photoshop to image/png\"/&gt; &lt;rdf:li stEvt:action=\"saved\" stEvt:instanceID=\"xmp.iid:dfbb7ec0-e747-a94c-9843-95754e9afc41\" stEvt:when=\"2020-04-20T12:36:11+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CC 2019 (Windows)\" stEvt:changed=\"/\"/&gt; &lt;/rdf:Seq&gt; &lt;/xmpMM:History&gt; &lt;xmpMM:DerivedFrom stRef:instanceID=\"xmp.iid:e83a32cb-43da-a545-9be1-c772ef472acf\" stRef:documentID=\"xmp.did:6F08E9D699B5E711B0C38CA49283DB2D\" stRef:originalDocumentID=\"xmp.did:6F08E9D699B5E711B0C38CA49283DB2D\"/&gt; &lt;photoshop:TextLayers&gt; &lt;rdf:Bag&gt; &lt;rdf:li photoshop:LayerName=\"s\" photoshop:LayerText=\"s\"/&gt; &lt;/rdf:Bag&gt; &lt;/photoshop:TextLayers&gt; &lt;/rdf:Description&gt; &lt;/rdf:RDF&gt; &lt;/x:xmpmeta&gt; &lt;?xpacket end=\"r\"?&gt;&lt;:\u00C9o\x00\x00\x00\u0086IDAT8\u008D\u00AD\u0094Y\x0E\u00C0 \bD\u00C5xn\u00AEN\u00BF\u00DA\"\u0095\u00B5Lb\u008C\u0089&gt;G\x16\u0081\u0088F\u00A7\u0096XW\u00E8\u00C0\x17\u00D3\u00D8\x10\u009D7MD,\u0098\u00D2ur\u00F8K@\u00BDY\u0081v\u0087k\u00BC\u00C1\u00A5\u00A1\x04\u00DA\u00D1vN\u0096\u00CDi\u00B3\u0094y\u00A9\u00F5\u00E4\x1B\x06lh\u0097&lt;\u00F2\x1CJ\u00B9!\u00B1\x1C\u0086\x1Ce\u0080\x12\x1A\x02G\u00CA&amp;\x1C\u00BF(\u0090\u0083]\u00A8\u0097\u00E5t\x17YY\x06\x05jf\u00DA+\u009Bt\u00E7t|\u00B0*\u00B0\u00D2\u00C7\x1F]\u00A8@\x18\u00B3\f\u00F8\u00E7@\x00\x00\x00\x00IEND\u00AEB`\u0082</putInImg>
+          <toolbutton>toolbutton</toolbutton>
+          <toggle>0</toggle>
         </info>
       </item>
     </group>
@@ -1320,6 +1335,102 @@
           <value>NaN</value>
           <helpTip></helpTip>
           <color>NaN</color>
+        </info>
+      </item>
+    </group>
+  </item>
+  <item>
+    <info>
+      <type>[object Group]</type>
+      <location>0,360</location>
+      <size>200,30</size>
+      <name>group_layer</name>
+      <text>undefined</text>
+      <value>NaN</value>
+      <helpTip></helpTip>
+      <color>NaN</color>
+    </info>
+    <group>
+      <item>
+        <info>
+          <type>[object IconButton]</type>
+          <location>5,5</location>
+          <size>20,20</size>
+          <name>iconbut_selecteLayer</name>
+          <text></text>
+          <value>NaN</value>
+          <helpTip></helpTip>
+          <path>/f/Git_Repos/SJXTools/UI/selecteLayer.png</path>
+          <putInImg>\u0089PNG\r\n\x1A\n\x00\x00\x00\rIHDR\x00\x00\x00\x14\x00\x00\x00\x14\b\x06\x00\x00\x00\u008D\u0089\x1D\r\x00\x00\x00\tpHYs\x00\x00\x0B\x13\x00\x00\x0B\x13\x01\x00\u009A\u009C\x18\x00\x00\x0B\x11iTXtXML:com.adobe.xmp\x00\x00\x00\x00\x00&lt;?xpacket begin=\"\u00EF\u00BB\u00BF\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?&gt; &lt;x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"Adobe XMP Core 5.6-c145 79.163499, 2018/08/13-16:40:22        \"&gt; &lt;rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"&gt; &lt;rdf:Description rdf:about=\"\" xmlns:xmp=\"http://ns.adobe.com/xap/1.0/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xmpMM=\"http://ns.adobe.com/xap/1.0/mm/\" xmlns:stEvt=\"http://ns.adobe.com/xap/1.0/sType/ResourceEvent#\" xmlns:stRef=\"http://ns.adobe.com/xap/1.0/sType/ResourceRef#\" xmlns:photoshop=\"http://ns.adobe.com/photoshop/1.0/\" xmlns:tiff=\"http://ns.adobe.com/tiff/1.0/\" xmlns:exif=\"http://ns.adobe.com/exif/1.0/\" xmp:CreatorTool=\"Adobe Photoshop CC 2019 (Windows)\" xmp:CreateDate=\"2017-10-20T21:24:09+08:00\" xmp:MetadataDate=\"2020-04-20T10:44:23+08:00\" xmp:ModifyDate=\"2020-04-20T10:44:23+08:00\" dc:format=\"image/png\" xmpMM:InstanceID=\"xmp.iid:4ec09ca7-5da1-7a47-875c-f9b7770a43d9\" xmpMM:DocumentID=\"adobe:docid:photoshop:a6781024-1124-084d-a937-ffde1c7b05ca\" xmpMM:OriginalDocumentID=\"xmp.did:6F08E9D699B5E711B0C38CA49283DB2D\" photoshop:ColorMode=\"3\" photoshop:ICCProfile=\"sRGB IEC61966-2.1\" tiff:Orientation=\"1\" tiff:XResolution=\"720000/10000\" tiff:YResolution=\"720000/10000\" tiff:ResolutionUnit=\"2\" exif:ColorSpace=\"1\" exif:PixelXDimension=\"20\" exif:PixelYDimension=\"20\"&gt; &lt;xmpMM:History&gt; &lt;rdf:Seq&gt; &lt;rdf:li stEvt:action=\"created\" stEvt:instanceID=\"xmp.iid:6F08E9D699B5E711B0C38CA49283DB2D\" stEvt:when=\"2017-10-20T21:24:09+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CS6 (Windows)\"/&gt; &lt;rdf:li stEvt:action=\"saved\" stEvt:instanceID=\"xmp.iid:7108E9D699B5E711B0C38CA49283DB2D\" stEvt:when=\"2017-10-20T21:28:38+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CS6 (Windows)\" stEvt:changed=\"/\"/&gt; &lt;rdf:li stEvt:action=\"saved\" stEvt:instanceID=\"xmp.iid:4f11c1c9-3d86-ce42-be52-727831429c30\" stEvt:when=\"2020-04-20T10:44:23+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CC 2019 (Windows)\" stEvt:changed=\"/\"/&gt; &lt;rdf:li stEvt:action=\"converted\" stEvt:parameters=\"from application/vnd.adobe.photoshop to image/png\"/&gt; &lt;rdf:li stEvt:action=\"derived\" stEvt:parameters=\"converted from application/vnd.adobe.photoshop to image/png\"/&gt; &lt;rdf:li stEvt:action=\"saved\" stEvt:instanceID=\"xmp.iid:4ec09ca7-5da1-7a47-875c-f9b7770a43d9\" stEvt:when=\"2020-04-20T10:44:23+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CC 2019 (Windows)\" stEvt:changed=\"/\"/&gt; &lt;/rdf:Seq&gt; &lt;/xmpMM:History&gt; &lt;xmpMM:DerivedFrom stRef:instanceID=\"xmp.iid:4f11c1c9-3d86-ce42-be52-727831429c30\" stRef:documentID=\"adobe:docid:photoshop:82ce4bbb-8cba-bb44-b742-040457a3e21c\" stRef:originalDocumentID=\"xmp.did:6F08E9D699B5E711B0C38CA49283DB2D\"/&gt; &lt;photoshop:DocumentAncestors&gt; &lt;rdf:Bag&gt; &lt;rdf:li&gt;7FA41B12C73FF2F96BC05CB58C15F014&lt;/rdf:li&gt; &lt;/rdf:Bag&gt; &lt;/photoshop:DocumentAncestors&gt; &lt;/rdf:Description&gt; &lt;/rdf:RDF&gt; &lt;/x:xmpmeta&gt; &lt;?xpacket end=\"r\"?&gt;\u00F199a\x00\x00\x00yIDAT8\u008D\u00ED\u0094\u00B1\r\x03!\f\x00\u00CF\x12[x\x01o\u0082D\u00CB|\u008C\u00E0\u0096\u008AA\x18\u0080=\u0092\u00E6?\u00C9\u00A7\u00C4-Wa\x17't\u0085EU\u0089\u00B0\u00D6z\u00CC\u00A2\u00AA\u0098\u00D9+d\u00BD\x18cH\u00BA\u00879gHff\x00\u00A4\u00FFE\u0094\u0094s\x06\u0090]Ak\u00ED)\x04\u00A8\u00B5n7\u00EC\u00BD\x7F\u00DE\u00A5\u0094oCw\u00DFur}\n\u00F8ix/\u00A2$\x00w?\r\u00F79\r\u00E3\u00C8\u00B9\u0087a\u00DE%):j\u00FD\x07\u00C6\u009D\x00\x00\x00\x00IEND\u00AEB`\u0082</putInImg>
+          <toolbutton>toolbutton</toolbutton>
+          <toggle>0</toggle>
+        </info>
+      </item>
+      <item>
+        <info>
+          <type>[object DropDownList]</type>
+          <location>105,5</location>
+          <size>40,22</size>
+          <name>downlist_separateAxis</name>
+          <text>1</text>
+          <value>NaN</value>
+          <helpTip></helpTip>
+          <itemMsg>X
+Y
+Z</itemMsg>
+        </info>
+      </item>
+      <item>
+        <info>
+          <type>[object IconButton]</type>
+          <location>30,5</location>
+          <size>20,20</size>
+          <name>iconbut_separatePositin</name>
+          <text>undefined</text>
+          <value>NaN</value>
+          <helpTip></helpTip>
+          <path>/f/Git_Repos/SJXTools/UI/separatePosition.png</path>
+          <putInImg>\u0089PNG\r\n\x1A\n\x00\x00\x00\rIHDR\x00\x00\x00\x14\x00\x00\x00\x14\b\x06\x00\x00\x00\u008D\u0089\x1D\r\x00\x00\x00\tpHYs\x00\x00\x0B\x13\x00\x00\x0B\x13\x01\x00\u009A\u009C\x18\x00\x00\x0B\x11iTXtXML:com.adobe.xmp\x00\x00\x00\x00\x00&lt;?xpacket begin=\"\u00EF\u00BB\u00BF\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?&gt; &lt;x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"Adobe XMP Core 5.6-c145 79.163499, 2018/08/13-16:40:22        \"&gt; &lt;rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"&gt; &lt;rdf:Description rdf:about=\"\" xmlns:xmp=\"http://ns.adobe.com/xap/1.0/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:xmpMM=\"http://ns.adobe.com/xap/1.0/mm/\" xmlns:stEvt=\"http://ns.adobe.com/xap/1.0/sType/ResourceEvent#\" xmlns:stRef=\"http://ns.adobe.com/xap/1.0/sType/ResourceRef#\" xmlns:photoshop=\"http://ns.adobe.com/photoshop/1.0/\" xmlns:tiff=\"http://ns.adobe.com/tiff/1.0/\" xmlns:exif=\"http://ns.adobe.com/exif/1.0/\" xmp:CreatorTool=\"Adobe Photoshop CC 2019 (Windows)\" xmp:CreateDate=\"2017-10-20T21:24:09+08:00\" xmp:MetadataDate=\"2020-04-20T12:03:43+08:00\" xmp:ModifyDate=\"2020-04-20T12:03:43+08:00\" dc:format=\"image/png\" xmpMM:InstanceID=\"xmp.iid:1e8bab8b-ec1f-5648-92eb-2bf7a2992a40\" xmpMM:DocumentID=\"adobe:docid:photoshop:88d7739d-aee0-f343-b63a-a37918cfe751\" xmpMM:OriginalDocumentID=\"xmp.did:6F08E9D699B5E711B0C38CA49283DB2D\" photoshop:ColorMode=\"3\" photoshop:ICCProfile=\"sRGB IEC61966-2.1\" tiff:Orientation=\"1\" tiff:XResolution=\"720000/10000\" tiff:YResolution=\"720000/10000\" tiff:ResolutionUnit=\"2\" exif:ColorSpace=\"1\" exif:PixelXDimension=\"20\" exif:PixelYDimension=\"20\"&gt; &lt;xmpMM:History&gt; &lt;rdf:Seq&gt; &lt;rdf:li stEvt:action=\"created\" stEvt:instanceID=\"xmp.iid:6F08E9D699B5E711B0C38CA49283DB2D\" stEvt:when=\"2017-10-20T21:24:09+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CS6 (Windows)\"/&gt; &lt;rdf:li stEvt:action=\"saved\" stEvt:instanceID=\"xmp.iid:7108E9D699B5E711B0C38CA49283DB2D\" stEvt:when=\"2017-10-20T21:28:38+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CS6 (Windows)\" stEvt:changed=\"/\"/&gt; &lt;rdf:li stEvt:action=\"saved\" stEvt:instanceID=\"xmp.iid:d905cdd5-daff-b14d-9488-02487a29ee3a\" stEvt:when=\"2020-04-20T12:03:43+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CC 2019 (Windows)\" stEvt:changed=\"/\"/&gt; &lt;rdf:li stEvt:action=\"converted\" stEvt:parameters=\"from application/vnd.adobe.photoshop to image/png\"/&gt; &lt;rdf:li stEvt:action=\"derived\" stEvt:parameters=\"converted from application/vnd.adobe.photoshop to image/png\"/&gt; &lt;rdf:li stEvt:action=\"saved\" stEvt:instanceID=\"xmp.iid:1e8bab8b-ec1f-5648-92eb-2bf7a2992a40\" stEvt:when=\"2020-04-20T12:03:43+08:00\" stEvt:softwareAgent=\"Adobe Photoshop CC 2019 (Windows)\" stEvt:changed=\"/\"/&gt; &lt;/rdf:Seq&gt; &lt;/xmpMM:History&gt; &lt;xmpMM:DerivedFrom stRef:instanceID=\"xmp.iid:d905cdd5-daff-b14d-9488-02487a29ee3a\" stRef:documentID=\"adobe:docid:photoshop:b4fac72f-0e08-9943-9b62-51e0a1e1b61f\" stRef:originalDocumentID=\"xmp.did:6F08E9D699B5E711B0C38CA49283DB2D\"/&gt; &lt;photoshop:DocumentAncestors&gt; &lt;rdf:Bag&gt; &lt;rdf:li&gt;7FA41B12C73FF2F96BC05CB58C15F014&lt;/rdf:li&gt; &lt;/rdf:Bag&gt; &lt;/photoshop:DocumentAncestors&gt; &lt;/rdf:Description&gt; &lt;/rdf:RDF&gt; &lt;/x:xmpmeta&gt; &lt;?xpacket end=\"r\"?&gt;r\u00C1\u00EF]\x00\x00\x00^IDAT8\u008D\u00ED\u0091\u00C1\r\u00800\f\x03]\u00C6`\u00A30\x00C2\x17\nc\x1C\u008F\u00E6\u00D1W\x03\u00EA7'Y\u00F2\u00C3\u008A\u00E4X\u0080\x12\x19\u00E0!\u00CB\u00F2\rP\u0082K:\u00C3_\u0092\u00F6Yx\u00CB\u00AE\r \u00A9\u00E5\u00A9\u00BC\u00F2\x01&lt;\u00C0\x1D~\u00B9\u00F2/\u00BET6\u00F5?z\u00F8)5\u00CA:5J\u008D\u00D2\u00A9Q\u00E6\u00BCf\u00D5a\u00D6\x7F\u0099`\u00AA\x00\x00\x00\x00IEND\u00AEB`\u0082</putInImg>
+          <toolbutton>toolbutton</toolbutton>
+          <toggle>0</toggle>
+        </info>
+      </item>
+      <item>
+        <info>
+          <type>[object EditText]</type>
+          <location>55,5</location>
+          <size>25,22</size>
+          <name>edittext_separateMin</name>
+          <text>0</text>
+          <value>NaN</value>
+          <helpTip></helpTip>
+          <BGColor>0.62352941176471,0.62352941176471,0.62352941176471</BGColor>
+          <fontColor>0,0,0</fontColor>
+          <colorCheck>0</colorCheck>
+          <readonly>0</readonly>
+          <noecho>0</noecho>
+          <borderless>0</borderless>
+          <multiline>0</multiline>
+          <enterKeySignalsOnChange>0</enterKeySignalsOnChange>
+        </info>
+      </item>
+      <item>
+        <info>
+          <type>[object EditText]</type>
+          <location>80,5</location>
+          <size>25,22</size>
+          <name>edittext_separateMax</name>
+          <text>0</text>
+          <value>NaN</value>
+          <helpTip></helpTip>
+          <BGColor>0.62352941176471,0.62352941176471,0.62352941176471</BGColor>
+          <fontColor>0,0,0</fontColor>
+          <colorCheck>0</colorCheck>
+          <readonly>0</readonly>
+          <noecho>0</noecho>
+          <borderless>0</borderless>
+          <multiline>0</multiline>
+          <enterKeySignalsOnChange>0</enterKeySignalsOnChange>
         </info>
       </item>
     </group>
